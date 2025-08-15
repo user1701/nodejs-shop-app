@@ -17,13 +17,13 @@ app.use(bodyParser.json());
 const edge = edgeEngine.getInstance();
 
 // Routes
-app.get("/", async (req, res) => {
-  const html = await edge.render("home");
-  res.send(html);
-});
+// app.get("/", async (req, res) => {
+//   const html = await edge.render("home");
+//   res.send(html);
+// });
 
 app.use("/admin", adminRoutes);
-app.use("/shop", shopRoutes);
+app.use("/", shopRoutes);
 
 // Handle 404 errors
 app.use(async (req, res) => {
