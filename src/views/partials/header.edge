@@ -1,0 +1,9 @@
+<header class="header">
+    <nav>
+        <ul class="nav-list">
+            @each(link in config.navigation)
+            <li><a href="{{ link.url }}">{{ link.text }}</a></li>
+            @end
+        </ul>
+    </nav>
+</header>

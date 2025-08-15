@@ -1,12 +1,13 @@
 import { Router } from "express";
+import edgeEngine from "../utils/edgeEngine.ts";
 
 const router = Router();
+const edge = edgeEngine.getInstance();
 
-router.get("/", (req, res) => {
-  res.status(200).send(`
-    <h1>Shop Page</h1>
-    <p>Welcome to the shop!</p>
-  `);
+router.get("/", async (req, res) => {
+  const html = await edge.render("shop");
+
+  res.status(200).send(html);
 });
 
 export default router;

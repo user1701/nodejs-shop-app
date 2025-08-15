@@ -1,20 +1,23 @@
-import express from "express";
+import { Router } from "express";
+import edgeEngine from "../utils/edgeEngine.ts";
 
-const router = express.Router();
+const router = Router();
+const edge = edgeEngine.getInstance();
 
-router.get("/product", (req, res) => {
-  res.status(200).send(`
-    <h1>Admin Page</h1>
-    <form action="/admin/product" method="POST">
-      <input type="text" name="productName" placeholder="Enter product name" required>
-      <button type="submit">Add product</button>
-    </form>
-  `);
+// router.get("/products", (req, res) => {
+//   res.status(200).sendFile(getViews("admin"));
+// });
+
+router.get("/products/add", async (req, res) => {
+  const html = await edge.render("admin");
+
+  res.status(200).send(html);
 });
 
-router.post("/product", (req, res) => {
+router.post("/products", (req, res) => {
   console.log(req.body);
-  res.redirect(req.originalUrl);
+
+  res.redirect("/shop");
 });
 
 export default router;

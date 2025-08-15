@@ -3,25 +3,32 @@ import bodyParser from "body-parser";
 
 import adminRoutes from "./routes/admin.ts";
 import shopRoutes from "./routes/shop.ts";
+import { __dirname } from "./utils/paths.ts";
+import edgeEngine from "./utils/edgeEngine.ts";
 
 const PORT = process.env.PORT || 3001;
 
 const app = express();
+app.use(express.static("public"));
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
+const edge = edgeEngine.getInstance();
+
 // Routes
-app.get("/", (req, res) => {
-  res.send("<h1>Welcome to the Home Page</h1>");
+app.get("/", async (req, res) => {
+  const html = await edge.render("home");
+  res.send(html);
 });
 
 app.use("/admin", adminRoutes);
 app.use("/shop", shopRoutes);
 
 // Handle 404 errors
-app.use((req, res) => {
-  res.status(404).send("Page not found");
+app.use(async (req, res) => {
+  const html = await edge.render("not-found");
+  res.status(404).send(html);
 });
 
 app.listen(PORT, () => {
