@@ -1,0 +1,64 @@
+<div class="product-card">
+    <div class="product-card__header">
+        @if(product.imageUrl)
+        <img class="product-card__image" src="{{ product.imageUrl }}" alt="{{ product.title }} image" />
+        @else
+        <img src="/images/placeholder-image.jpg" alt="default image placeholder" />
+        @end
+    </div>
+
+    <section class="product-card__body">
+        <h3 class="product-card__title">
+            <a href="/products/{{ product.id }}" class="product-card__title-link">
+                {{product.title }}
+            </a>
+        </h3>
+        <p class="product-card__description">{{ product.description }}</p>
+        <p class="product-card__price">Price: ${{ product.price }}</p>
+    </section>
+
+    <footer class="product-card__footer">
+        <button class="product-card__button small primary" onclick="addToCart('{{ product.id }}')">Add to Cart</button>
+        <a class="product-card__button small" href="/products/{{ product.id }}">View Details</a>
+        <button class="product-card__button small danger" onclick="deleteProduct('{{ product.id }}')">Delete</button>
+    </footer>
+</div>
+
+
+@pushOnceTo('scripts')
+<script>
+    async function addToCart(productId) {
+        // Logic to add product to cart
+        console.log(`Product ${productId} added to cart.`);
+        try {
+            const response = await fetch(`/cart/add/${productId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ id: productId })
+            });
+        } catch (error) {
+            console.error('Error adding product to cart:', error);
+        }
+
+    }
+
+    async function deleteProduct(productId) {
+        // Logic to delete product
+        console.log(`Product ${productId} deleted.`);
+        try {
+            const response = await fetch(`/products/${productId}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            //console.log(response);
+            location.reload(); // Reload the page to reflect changes
+        } catch (error) {
+            console.error('Error deleting product:', error);
+        }
+    }
+</script>
+@end

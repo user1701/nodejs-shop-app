@@ -6,25 +6,26 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>{{title || "Test node app"}}</title>
     @if ($slots.meta)
-    {{{ await $slots.meta() }}}
+        {{{ await $slots.meta() }}}
     @endif
 
     <link rel="stylesheet" href="/css/styles.css" />
     @if ($slots.styles)
-    {{{ await $slots.styles() }}}
+        {{{ await $slots.styles() }}}
     @endif
 </head>
 
 <body>
     @include('partials/header')
-    <main>
+    <main class="main-content">
         <div class="container">
             {{{ await $slots.main() }}}
         </div>
     </main>
+
+    @stack('scripts')
     @if ($slots.scripts)
-    {{{ await $slots.scripts() }}}
+        {{{ await $slots.scripts() }}}
     @endif
 </body>
-
 </html>

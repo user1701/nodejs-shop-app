@@ -1,0 +1,17 @@
+@layout.app({ title: "Shop - Home Page" })
+    @include('partials/header')
+
+    @slot('main')
+        <h1>Product details</h1>
+
+        @if(product)
+            <h2>{{ product.title }}</h2>
+            @if(product.imageUrl)
+                <img src="{{ product.imageUrl }}" alt="{{ product.title }}" />
+            @end
+            <p>{{ product.description }}</p>
+            <p>Price: ${{ product.price }}</p>
+        @end
+    @endslot
+
+@end

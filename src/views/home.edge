@@ -1,7 +1,16 @@
 @layout.app({ title: "Shop - Home Page" })
+    @include('partials/header')
 
     @slot('main')
         <h1>Welcome to the Home Page</h1>
+
+        <ul>
+            @each(product in products)
+                <li>{{ product.title }}</li>
+            @else
+                <li>No products available at the moment.</li>
+            @end
+        </ul>
     @endslot
 
 @end

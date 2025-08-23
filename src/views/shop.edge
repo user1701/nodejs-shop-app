@@ -1,18 +1,18 @@
 @layout.app({ title: "Shop - Main Page" })
 
     @slot('main')
-        <h1>Welcome to the Shop</h1>
-        <p>Here you can find a variety of products.</p>
-        <h2>Products</h2>
-        <ul>
-            @each(product in products)
-                <li>{{ product.title }}</li>
-            @else
-                <li>No products available at the moment.</li>
-            @end
-        </ul>
+    <h2>Welcome to the Shop</h2>
+    <p>Here you can find a variety of products.</p>
+    <h3>Products</h3>
+    <section class="product-container">
+        @each(product in products)
+            @include('partials/product-card')
+        @else
+            <p>No products available at the moment.</p>
+        @end
+    </section>
 
-        
+
     @endslot
 
 @end

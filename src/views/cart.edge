@@ -1,0 +1,22 @@
+@layout.app({ title: "Shop - Cart Page" })
+
+    @slot('main')
+        <h1>Cart</h1>
+
+        <h2>Products</h2>
+        <ul>
+            @each(product in cart)
+                <li>{{ product.title }} - {{ product.price }}</li>
+            @else
+                <li>Cart is empty</li>
+            @end
+        </ul>
+        @if(total)
+            <hr/>
+            <h4>Total Price: ${{ total }}</h4>
+            <a href="/checkout">Proceed to Checkout</a>
+        @end
+
+    @endslot
+
+@end
