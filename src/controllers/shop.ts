@@ -1,18 +1,20 @@
 import type { Request, Response } from "express";
 import edgeEngine from "../utils/edgeEngine.ts";
-import Shop from "../model/product.ts";
+import ProductStorage from "../model/product.ts";
 import CartStorage from "../model/cart.ts";
-
-const ProductStorage = Shop.getInstance()
 
 const edge = edgeEngine.getInstance();
 
 export const getShopHome = async (req: Request, res: Response) => {
-	const products = ProductStorage.getAll();
+	try {
+		const [products] = await ProductStorage.getAll();
+		const html = await edge.render("home", { products, path: req.path });
 
-	const html = await edge.render("home", { products, path: req.path });
-
-	res.status(200).send(html);
+		res.status(200).send(html);
+	} catch (err: unknown) {
+		console.error("Error fetching products:", err);
+		return res.status(500).send("Internal server error.");
+	}
 };
 
 export const getAddProduct = async (req: Request, res: Response) => {
@@ -30,7 +32,7 @@ export const getCheckout = async (req: Request, res: Response) => {
 // -- Cart Controllers
 export const getCart = async (req: Request, res: Response) => {
 	const cart = CartStorage.getAll();
-	console.log('getCart: ', cart);
+
 	const html = await edge.render("cart", {
 		cart,
 		total: CartStorage.getTotalPrice(),

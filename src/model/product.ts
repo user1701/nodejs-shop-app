@@ -1,7 +1,7 @@
 import type { IProduct } from "../types.ts";
-import Storage, { FileStorage } from "../utils/storage.ts";
 import { v4 as uuid } from "uuid";
-
+import Database from "../utils/db.ts";
+import type { ResultSetHeader, RowDataPacket } from "mysql2";
 export class Product implements IProduct {
 	public id: string;
 
@@ -67,67 +67,44 @@ export class ProductList {
 }
 
 export class Shop {
-    private static instance: Shop;
-	private storage: FileStorage<Product>;
-	private productList = ProductList.getInstance();
+	private static instance: Shop;
+	private db = Database.getInstance().pool;
 
-	private constructor(storage: FileStorage<Product>) {
-		this.storage = storage;
-		this.syncData();
-        // console.log('Shop: ', this.productList.getProducts())
-	}
+	private constructor() {}
 
-    static getInstance() {
-        if(!Shop.instance) {
-            Shop.instance = new Shop(new Storage("products"))
-        }
-
-        return this.instance
-    }
-
-	save(): void {
-		this.storage.save(this.productList.getProducts());
-	}
-
-	syncData(): void {
-		this.productList.clearProducts();
-		const storedProducts = this.storage.getAll();
-
-		if (storedProducts) {
-			for (const product of storedProducts) {
-				this.productList.addProduct(product);
-			}
+	static getInstance() {
+		if (!Shop.instance) {
+			Shop.instance = new Shop();
 		}
+
+		return this.instance;
 	}
 
-	addProduct(product: Omit<Product, "id">): void {
-		const newProduct = new Product(
-			product.title,
-			product.imageUrl,
-			product.description,
-			product.price
+	addProduct(product: Omit<IProduct, "id">) {
+		return this.db.execute<ResultSetHeader>(
+			"INSERT INTO products (title, imageUrl, description, price) VALUES (?, ?, ?, ?)",
+			[product.title, product.imageUrl, product.description, product.price]
 		);
-
-		this.productList.addProduct(newProduct);
-		this.save();
 	}
 
-	removeProduct(id: string): void {
-		this.productList.removeProduct(id);
-		this.save();
+	removeProduct(id: string) {
+		if (!id) {
+			throw new Error("Product ID is required.");
+		}
+
+		return this.db.execute<ResultSetHeader>("DELETE FROM products WHERE id = ?", [id]);
 	}
 
-	getById(id: string): Product | undefined {
-		return this.productList.getProducts().find((product) => product.id === id);
+	getById(id: string) {
+		return this.db.execute<RowDataPacket[]>(
+			"SELECT * FROM products WHERE id = ?",
+			[id]
+		);
 	}
 
-	getAll(): Product[] {
-		return this.productList.getProducts();
-	}
-
-	reset(): void {
-		this.productList.clearProducts();
+	getAll() {
+		return this.db.execute<RowDataPacket[]>("SELECT * FROM products");
 	}
 }
 
-export default Shop;
+export default Shop.getInstance();
