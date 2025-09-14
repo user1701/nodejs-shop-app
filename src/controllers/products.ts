@@ -1,11 +1,12 @@
 import type { Request, Response } from "express";
 import edgeEngine from "../utils/edgeEngine.ts";
-import ShopProducts, { Product } from "../model/product.ts";
+import Product from "../models/product.ts";
+import type { ProductCreationAttributes } from "../models/product.ts";
 
 const edge = edgeEngine.getInstance();
 
 export const getProducts = async (req: Request, res: Response) => {
-	const [products] = await ShopProducts.getAll();
+	const products = await Product.findAll();
 	console.log(`Fetched ${products.length} products from database.`);
 
 	const html = await edge.render("shop", { products, path: req.path });
@@ -22,8 +23,8 @@ export const getProduct = async (req: Request, res: Response) => {
 	}
 
 	try {
-		const [products] = await ShopProducts.getById(productId);
-		const product = products[0] as Product | undefined;
+		const product = await Product.findOne({ where: { id: productId } });
+		console.log("Product fetched from database:", product);
 
 		if (!product) {
 			return res.status(404).send("Product not found.");
@@ -63,20 +64,69 @@ export const postAddProduct = async (req: Request, res: Response) => {
 	const imageData = (await image.json()) as { message: string };
 	const productImageUrl = imageData.message;
 
-	const product = {
+	const product: ProductCreationAttributes = {
 		title,
 		imageUrl: imageUrl || productImageUrl,
 		description,
 		price: parseFloat(price),
-	} satisfies Omit<Product, "id">;
+	};
 
 	try {
-		const [result] = await ShopProducts.addProduct(product);
-		console.log("Product added with ID:", result.insertId);
+        const newProduct = await req.user.createProduct(product);
+		// const newProduct = await Product.create(product);
+		console.log("Product added with ID: ", newProduct);
 
 		res.redirect("/");
 	} catch (err: unknown) {
 		console.error("Error adding product:", err);
+		return res.status(500).send("Internal server error.");
+	}
+};
+
+export const getEditProduct = async (req: Request, res: Response) => {
+	const productId = req.params.id;
+	console.log(`Editing product with ID: ${productId}`);
+	if (!productId) {
+		return res.status(400).send("Product ID is required.");
+	}
+	try {
+		const product = await Product.findOne({ where: { id: productId } });
+		if (!product) {
+			return res.status(404).send("Product not found.");
+		}
+
+		const html = await edge.render("edit-product", { product: product });
+		res.status(200).send(html);
+	} catch (err: unknown) {
+		console.error("Error finding product:", err);
+		return res.status(500).send("Internal server error.");
+	}
+};
+
+export const updateProduct = async (req: Request, res: Response) => {
+	const { id, title, imageUrl, description, price } = req.body;
+	console.log(`Updating product with ID: ${id}`);
+	if (!id) {
+		return res.status(400).send("Product ID is required.");
+	}
+
+	try {
+		const [affectedRows] = await Product.update(
+			{
+				title,
+				imageUrl,
+				description,
+				price,
+			},
+			{ where: { id } }
+		);
+		if (affectedRows === 0) {
+			return res.status(404).send("Product not found or no changes made.");
+		}
+
+		res.status(200).send("Product updated successfully.");
+	} catch (err: unknown) {
+		console.error("Error finding product:", err);
 		return res.status(500).send("Internal server error.");
 	}
 };
@@ -89,8 +139,10 @@ export const deleteProduct = async (req: Request, res: Response) => {
 	}
 
 	try {
-		const [result] = await ShopProducts.removeProduct(productId);
-		if (result.affectedRows === 0) {
+		const result = await Product.destroy({ where: { id: productId } });
+		console.log("Delete operation result:", result);
+
+		if (result === 0) {
 			return res.status(404).send("Product not found.");
 		}
 

@@ -1,13 +1,13 @@
 import type { Request, Response } from "express";
 import edgeEngine from "../utils/edgeEngine.ts";
-import ProductStorage from "../model/product.ts";
-import CartStorage from "../model/cart.ts";
+import Product from "../models/product.ts";
+import CartStorage from "../models/cart.ts";
 
 const edge = edgeEngine.getInstance();
 
 export const getShopHome = async (req: Request, res: Response) => {
 	try {
-		const [products] = await ProductStorage.getAll();
+		const products = await Product.findAll();
 		const html = await edge.render("home", { products, path: req.path });
 
 		res.status(200).send(html);
@@ -31,11 +31,11 @@ export const getCheckout = async (req: Request, res: Response) => {
 
 // -- Cart Controllers
 export const getCart = async (req: Request, res: Response) => {
-	const cart = CartStorage.getAll();
+	const cart = [];
 
 	const html = await edge.render("cart", {
 		cart,
-		total: CartStorage.getTotalPrice(),
+		// total: CartStorage.getTotalPrice(),
 	});
 
 	res.status(200).send(html);
@@ -48,11 +48,10 @@ export const postAddToCart = async (req: Request, res: Response) => {
 		return res.status(400).send("Product ID is required.");
 	}
 
-	const product = ProductStorage.getById(productId);
+	const product = Product.findOne({ where: { id: productId } });
 	if (!product) {
 		return res.status(404).send("Product not found.");
 	}
 
-	CartStorage.addProduct({ id: product.id, quantity: 1 });
 	res.redirect("/cart");
 };

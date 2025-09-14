@@ -19,8 +19,11 @@
 
     <footer class="product-card__footer">
         <button class="product-card__button small primary" onclick="addToCart('{{ product.id }}')">Add to Cart</button>
-        <a class="product-card__button small" href="/products/{{ product.id }}">View Details</a>
+        <hr />
+
         <button class="product-card__button small danger" onclick="deleteProduct('{{ product.id }}')">Delete</button>
+        <a class="product-card__button small" href="/products/edit/{{ product.id }}">Edit</a>
+        <a class="product-card__button small" href="/products/{{ product.id }}">View Details</a>
     </footer>
 </div>
 
