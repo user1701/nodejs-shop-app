@@ -1,46 +1,68 @@
 import sequelize from "../utils/db.ts";
-import { DataTypes, type ModelDefined } from "sequelize";
+import {
+	DataTypes,
+	Model,
+	type CreationOptional,
+	type ForeignKey,
+	type InferAttributes,
+	type InferCreationAttributes,
+    type NonAttribute,
+} from "sequelize";
+import type User from "./user.ts";
 
-export interface IProduct {
-	id: string;
-	title: string;
-	imageUrl: string;
-	description: string;
-	price: number;
+class Product extends Model<
+	InferAttributes<Product>,
+	InferCreationAttributes<Product>
+> {
+	declare id: CreationOptional<string>;
+
+	declare title: string;
+	declare imageUrl: string;
+	declare description: string;
+	declare price: number;
+
+    declare user?: NonAttribute<User>;
+	declare userId: ForeignKey<User["id"]>;
+
+	// timestamps!
+	declare createdAt: CreationOptional<Date>;
+	declare updatedAt: CreationOptional<Date>;
 }
 
-export type ProductCreationAttributes = Omit<IProduct, "id">;
-
-export type ProductModel = ModelDefined<IProduct, ProductCreationAttributes>;
-
-export const Product: ProductModel = sequelize.define("product", {
-	id: {
-		type: DataTypes.UUID,
-		primaryKey: true,
-		allowNull: false,
-		defaultValue: DataTypes.UUIDV4,
-		unique: true,
+Product.init(
+	{
+		id: {
+			type: DataTypes.UUID,
+			primaryKey: true,
+			allowNull: false,
+			defaultValue: DataTypes.UUIDV4,
+			unique: true,
+		},
+		title: {
+			type: DataTypes.STRING,
+			allowNull: false,
+		},
+		price: {
+			type: DataTypes.DOUBLE,
+			allowNull: false,
+		},
+		description: {
+			type: DataTypes.STRING,
+			allowNull: false,
+		},
+		imageUrl: {
+			type: DataTypes.STRING,
+			allowNull: false,
+		},
+		createdAt: DataTypes.DATE,
+		updatedAt: DataTypes.DATE,
 	},
-	title: {
-		type: DataTypes.STRING,
-		allowNull: false,
-	},
-	price: {
-		type: DataTypes.DOUBLE,
-		allowNull: false,
-	},
-	description: {
-		type: DataTypes.STRING,
-		allowNull: false,
-	},
-	imageUrl: {
-		type: DataTypes.STRING,
-		allowNull: false,
-	},
-});
-
-// {
-//     paranoid: true,
-// }
+	{
+		tableName: "products",
+		timestamps: true,
+		paranoid: true,
+		sequelize,
+	}
+);
 
 export default Product;

@@ -9,7 +9,7 @@ import edgeEngine from "./utils/edgeEngine.ts";
 
 import sequlize from "./utils/db.ts";
 import Product from "./models/product.ts";
-import User from "./models/user.ts";
+import User, { createDefaultUser } from "./models/user.ts";
 
 const PORT = process.env.PORT || 3001;
 
@@ -53,24 +53,15 @@ app.use(shopRoutes);
 // Handle 404 errors
 app.use(NotFoundController);
 
-Product.belongsTo(User, { constraints: true, onDelete: "CASCADE" });
 User.hasMany(Product);
+Product.belongsTo(User, { constraints: true, onDelete: "CASCADE" });
 
 sequlize
 	.sync({ force: false })
-	.then(() => {
+	.then(async () => {
 		console.log("Database synced successfully.");
 
-		// Create a default user if not exists
-		User.findByPk(DEFAULT_USER_ID).then((user) => {
-			if (!user) {
-				User.create({
-					name: "Ivan",
-					email: "ivan@gmail.com",
-					password: "test123",
-				});
-			}
-		});
+		await createDefaultUser(DEFAULT_USER_ID);
 
 		app.listen(PORT, () => {
 			console.log(`Server is running on http://localhost:${PORT}`);

@@ -64,15 +64,13 @@ export const postAddProduct = async (req: Request, res: Response) => {
 	const imageData = (await image.json()) as { message: string };
 	const productImageUrl = imageData.message;
 
-	const product: ProductCreationAttributes = {
-		title,
-		imageUrl: imageUrl || productImageUrl,
-		description,
-		price: parseFloat(price),
-	};
-
 	try {
-        const newProduct = await req.user.createProduct(product);
+		const newProduct = await req.user.createProduct({
+			title,
+			imageUrl: imageUrl || productImageUrl,
+			description,
+			price: parseFloat(price),
+		});
 		// const newProduct = await Product.create(product);
 		console.log("Product added with ID: ", newProduct);
 
@@ -90,7 +88,8 @@ export const getEditProduct = async (req: Request, res: Response) => {
 		return res.status(400).send("Product ID is required.");
 	}
 	try {
-		const product = await Product.findOne({ where: { id: productId } });
+		const [product] = await req.user.getProducts({ where: { id: productId } });
+		// const product = await Product.findOne({ where: { id: productId } });
 		if (!product) {
 			return res.status(404).send("Product not found.");
 		}
@@ -139,7 +138,16 @@ export const deleteProduct = async (req: Request, res: Response) => {
 	}
 
 	try {
-		const result = await Product.destroy({ where: { id: productId } });
+		const result = await req.user
+			.getProducts({ where: { id: productId } })
+			.then(([product]) => {
+				if (product) {
+					product.destroy();
+					return product.id;
+				}
+				return 0;
+			});
+		// const result = await Product.destroy({ where: { id: productId } });
 		console.log("Delete operation result:", result);
 
 		if (result === 0) {
