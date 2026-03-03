@@ -3,20 +3,49 @@
     @slot('main')
         <h1>Cart</h1>
 
-        <h2>Products</h2>
-        <ul>
+        <div class="cart__wrapper">
             @each(product in cart)
-                <li>{{ product.title }} - {{ product.price }}</li>
+                <div class="cart__product">
+                    <div class="cart__product-data">
+                        <h4 class="cart__product-title">{{ product.title }}</h4>
+                        <div class="cart__product-qty"><b>quantity: </b>{{ product.CartItem.quantity }}</div>
+                        <div class="cart__product-price">${{ product.price }}</div>
+                    </div>
+                    <div class="cart__product-actions">
+                        <button type="button" class="product-card__button danger" onclick="removeProduct('{{product.id}}')">Delete</button>
+                    </div>
+                </div>
             @else
-                <li>Cart is empty</li>
+                <h4>Cart is empty</h4>
             @end
-        </ul>
-        @if(total)
-            <hr/>
-            <h4>Total Price: ${{ total }}</h4>
-            <a href="/checkout">Proceed to Checkout</a>
+        </div>
+        @if(total > 0)
+            <hr />
+            <div class="cart__total">
+                <div>Total Price:</div>
+                <div>${{ total }}</div>
+            </div>
+            <form action="/orders" method="POST">
+                <button type="submit" class="product-card__button success">Order Now</button>
+            </form>
         @end
-
     @endslot
+@end
 
+@pushOnceTo('scripts')
+<script>
+    async function removeProduct(cartItemId) {
+        console.log('Deleting cart item with id: ', cartItemId);
+
+        try {
+            const response = await fetch(`/cart/${cartItemId}`, {
+                method: "Delete"
+            });
+
+            location.reload()
+        } catch (err) {
+            console.error('Error: deleting product from cart, ', err)
+        }
+    }
+</script>
 @end

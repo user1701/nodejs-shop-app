@@ -34,13 +34,14 @@
         // Logic to add product to cart
         console.log(`Product ${productId} added to cart.`);
         try {
-            const response = await fetch(`/cart/add/${productId}`, {
+            const response = await fetch(`/cart/${productId}`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ id: productId })
+                redirect: "follow"
             });
+
+            if (response.redirected) {
+                location.replace(response.url)
+            }
         } catch (error) {
             console.error('Error adding product to cart:', error);
         }
@@ -50,12 +51,10 @@
     async function deleteProduct(productId) {
         // Logic to delete product
         console.log(`Product ${productId} deleted.`);
+
         try {
             const response = await fetch(`/products/${productId}`, {
                 method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
             });
             //console.log(response);
             location.reload(); // Reload the page to reflect changes

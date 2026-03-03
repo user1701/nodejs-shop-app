@@ -6,6 +6,10 @@
 		"rootDir": "./",
 		"outDir": "./dist",
 
+        "paths": {
+            "@/*": ["./src/*"]
+        },
+
 		// Environment Settings
 		// See also https://aka.ms/tsconfig/module
 		"module": "nodenext",
@@ -13,7 +17,7 @@
 		"types": ["node", "express"],
         "typeRoots": ["./node_modules/@types", "./src/@types"],
 		// For nodejs:
-		// "lib": ["esnext"],
+		"lib": ["esnext"],
 		// "types": ["node"],
 		// and npm install -D @types/node
 

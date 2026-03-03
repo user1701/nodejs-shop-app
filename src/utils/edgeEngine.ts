@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import path from "path";
 import { Edge } from "edge.js";
 import navigation from "../constants/navigaion.ts";
-
-let instance: Edge | null = null;
 
 export const initEdge = () => {
 	const edge = Edge.create();
@@ -14,24 +13,36 @@ export const initEdge = () => {
 	return edge;
 };
 
-class EdgeEngine {
-	private edge: Edge;
+function promisify(cb: any, fn: any) {
+	return new Promise(function (resolve, reject) {
+		cb =
+			cb ||
+			function (err: any, html: any) {
+				if (err) {
+					return reject(err);
+				}
 
-	constructor() {
-		if (!instance) {
-			instance = initEdge();
-		}
+				resolve(html);
+			};
 
-		this.edge = instance;
-	}
-
-	public render(view: string, data: Record<string, any> = {}): Promise<string> {
-		return this.edge.render(view, data);
-	}
-
-	public getInstance(): Edge {
-		return this.edge;
-	}
+		fn(cb);
+	});
 }
 
-export default new EdgeEngine();
+export function renderFile(
+	pathname: string,
+	options: Record<string, any> = {},
+	cb: (err: any, html?: any) => void
+) {
+	const parsedPath = path.parse(pathname);
+	const engine = initEdge();
+	return promisify(cb, async (cb: any) => {
+		options.locals = options;
+		try {
+			const html = await engine.render(parsedPath.name, options);
+			cb(null, html);
+		} catch (err) {
+			cb(err);
+		}
+	});
+}

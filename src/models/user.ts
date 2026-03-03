@@ -2,21 +2,32 @@ import sequelize from "../utils/db.ts";
 import {
 	Association,
 	DataTypes,
+	Model,
+	type BelongsToCreateAssociationMixin,
+	type BelongsToGetAssociationMixin,
+	type BelongsToSetAssociationMixin,
 	type CreationOptional,
 	type HasManyAddAssociationMixin,
+	type HasManyAddAssociationsMixin,
 	type HasManyCountAssociationsMixin,
 	type HasManyCreateAssociationMixin,
 	type HasManyGetAssociationsMixin,
+	type HasManyHasAssociationMixin,
+	type HasManyHasAssociationsMixin,
+	type HasManyRemoveAssociationMixin,
+	type HasManyRemoveAssociationsMixin,
+	type HasManySetAssociationsMixin,
 	type InferAttributes,
 	type InferCreationAttributes,
-	Model,
 	type NonAttribute,
 } from "sequelize";
 import Product from "./product.ts";
+import type Cart from "./cart.ts";
+import type Order from "./order.ts";
 
 class User extends Model<
-	InferAttributes<User, { omit: "products" }>,
-	InferCreationAttributes<User, { omit: "products" }>
+	InferAttributes<User, { omit: "products" | "cart" }>,
+	InferCreationAttributes<User, { omit: "products" | "cart" }>
 > {
 	declare id: CreationOptional<string>;
 	declare name: string;
@@ -33,20 +44,36 @@ class User extends Model<
 	// Since TS cannot determine model association at compile time
 	// we have to declare them here purely virtually
 	// these will not exist until `Model.init` was called.
+	// https://sequelize.org/docs/v6/core-concepts/assocs/#special-methodsmixins-added-to-instances
+
+	// Product mixins
+	declare products?: NonAttribute<Product[]>;
 	declare getProducts: HasManyGetAssociationsMixin<Product>;
 	declare addProduct: HasManyAddAssociationMixin<Product, string>;
-	declare addProducts: HasManyAddAssociationMixin<Product, string>;
-	declare setProducts: HasManyAddAssociationMixin<Product, string>;
-	declare removeProduct: HasManyAddAssociationMixin<Product, string>;
-	declare removeProducts: HasManyAddAssociationMixin<Product, string>;
-	declare hasProduct: HasManyAddAssociationMixin<Product, string>;
-	declare hasProducts: HasManyAddAssociationMixin<Product, string>;
+	declare addProducts: HasManyAddAssociationsMixin<Product, string>;
+	declare setProducts: HasManySetAssociationsMixin<Product, string>;
+	declare removeProduct: HasManyRemoveAssociationMixin<Product, string>;
+	declare removeProducts: HasManyRemoveAssociationsMixin<Product, string>;
+	declare hasProduct: HasManyHasAssociationMixin<Product, string>;
+	declare hasProducts: HasManyHasAssociationsMixin<Product, string>;
 	declare countProducts: HasManyCountAssociationsMixin;
 	declare createProduct: HasManyCreateAssociationMixin<Product, "userId">;
 
-	declare products?: NonAttribute<Product[]>;
+	// Possible inclusions from other associations
+	declare cart?: NonAttribute<Cart>;
+	declare getCart: BelongsToGetAssociationMixin<Cart>;
+	declare setCart: BelongsToSetAssociationMixin<Cart, string>;
+	declare createCart: BelongsToCreateAssociationMixin<Cart>;
 
-	declare static associations: { products: Association<User, Product> };
+    declare orders?: NonAttribute<Order[]>;
+    declare getOrders: HasManyGetAssociationsMixin<Order>;
+    declare createOrder: HasManyCreateAssociationMixin<Order, "userId">;
+
+	declare static associations: {
+		products: Association<User, Product>;
+		cart: Association<User, Cart>;
+		orders: Association<User, Order>;
+	};
 }
 
 User.init(
@@ -86,7 +113,7 @@ User.init(
 	}
 );
 
-export async function createDefaultUser(userId: string) {
+export async function createDefaultUser(userId: string, log: boolean = false) {
 	const [user, created] = await User.findOrCreate({
 		where: { id: userId },
 		defaults: {
@@ -97,10 +124,12 @@ export async function createDefaultUser(userId: string) {
 		},
 	});
 
-	if (created) {
-		console.log("Default user created:", user.toJSON());
-	} else {
-		console.log("Default user already exists:", user.toJSON());
+	if (log) {
+		if (created) {
+			console.log("Default user created:", user.toJSON());
+		} else {
+			console.log("Default user already exists:", user.toJSON());
+		}
 	}
 
 	return user;

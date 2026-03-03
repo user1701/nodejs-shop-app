@@ -1,17 +1,26 @@
 import type { Request, Response } from "express";
-import edgeEngine from "../utils/edgeEngine.ts";
 import Product from "../models/product.ts";
-import type { ProductCreationAttributes } from "../models/product.ts";
-
-const edge = edgeEngine.getInstance();
 
 export const getProducts = async (req: Request, res: Response) => {
 	const products = await Product.findAll();
 	console.log(`Fetched ${products.length} products from database.`);
 
-	const html = await edge.render("shop", { products, path: req.path });
+	res.render("shop", { products, path: req.path });
+};
 
-	res.status(200).send(html);
+export const getMyProducts = async (req: Request, res: Response) => {
+	if (!req.user) {
+		return res.status(401).send("Unauthorized: No user logged in.");
+	}
+
+	const products = await req.user.getProducts();
+	console.log(`Fetched ${products.length} products for user ${req.user.id}.`);
+
+	res.render("shop", {
+		products,
+		path: req.path,
+		title: "My Products",
+	});
 };
 
 export const getProduct = async (req: Request, res: Response) => {
@@ -30,8 +39,7 @@ export const getProduct = async (req: Request, res: Response) => {
 			return res.status(404).send("Product not found.");
 		} else {
 			console.log("Product found:", product);
-			const html = await edge.render("product", { product });
-			res.status(200).send(html);
+			res.render("product", { product });
 		}
 	} catch (err: unknown) {
 		console.error("Error fetching product:", err);
@@ -40,9 +48,9 @@ export const getProduct = async (req: Request, res: Response) => {
 };
 
 export const getAddProduct = async (req: Request, res: Response) => {
-	const html = await edge.render("add-product");
-
-	res.status(200).send(html);
+	res.render("add-product", {
+		path: req.path,
+	});
 };
 
 export const postAddProduct = async (req: Request, res: Response) => {
@@ -89,13 +97,11 @@ export const getEditProduct = async (req: Request, res: Response) => {
 	}
 	try {
 		const [product] = await req.user.getProducts({ where: { id: productId } });
-		// const product = await Product.findOne({ where: { id: productId } });
 		if (!product) {
 			return res.status(404).send("Product not found.");
 		}
 
-		const html = await edge.render("edit-product", { product: product });
-		res.status(200).send(html);
+		res.render("edit-product", { product: product });
 	} catch (err: unknown) {
 		console.error("Error finding product:", err);
 		return res.status(500).send("Internal server error.");

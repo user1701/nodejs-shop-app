@@ -3,7 +3,7 @@
         <ul class="nav-list">
             @each(link in config.navigation)
                 <li>
-                    <a class="{{ path === link.url ? 'active' : ''}}" href="{{ link.url }}">{{ link.text }}</a>
+                    <a class="{{ path === link.url ? 'active' : ''}}" href="{{ path === link.url ? '#' : link.url }}">{{ link.text }}</a>
                 </li>
             @end
         </ul>

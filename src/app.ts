@@ -2,28 +2,33 @@ import express from "express";
 import type { NextFunction, Request, Response } from "express";
 import bodyParser from "body-parser";
 
-import adminRoutes from "./routes/admin.ts";
-import shopRoutes from "./routes/shop.ts";
-import { NotFoundController } from "./controllers/common.ts";
-import edgeEngine from "./utils/edgeEngine.ts";
+import { renderFile } from "./utils/edgeEngine.ts";
 
-import sequlize from "./utils/db.ts";
-import Product from "./models/product.ts";
-import User, { createDefaultUser } from "./models/user.ts";
+import adminRoutes from "@/routes/admin.ts";
+import shopRoutes from "@/routes/shop.ts";
+import { NotFoundController } from "./controllers/common.ts";
+
+import sequlize from "@/utils/db.ts";
+import Product from "@/models/product.ts";
+import User, { createDefaultUser } from "@/models/user.ts";
+import Cart from "@/models/cart.ts";
+import CartItem from "@/models/cart-item.ts";
+
+import { DEFAULT_USER_ID } from "@/constants/user.ts";
+import Order from "./models/order.ts";
+import OrderItem from "./models/order-item.ts";
 
 const PORT = process.env.PORT || 3001;
 
-const edge = edgeEngine.getInstance();
-
 const app = express();
+app.engine("edge", renderFile);
+app.set("view engine", "edge");
+app.set("views", "src/views");
 app.use(express.static("public"));
-
-const DEFAULT_USER_ID = "8fbd2f2e-8b51-4141-bbaa-48b8cb7ef545";
 
 app.use((req: Request, res: Response, next: NextFunction) => {
 	User.findByPk(DEFAULT_USER_ID)
 		.then((user) => {
-			console.log(user?.toJSON());
 			if (user) {
 				// Store the user in the request object for later use
 				req.user = user;
@@ -41,27 +46,40 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
-app.use((req: Request, res: Response, next: NextFunction) => {
-	console.log(`Request received: ${req.method} ${req.path}`);
-	edge.global("path", req.path);
-	next();
-});
-
 app.use(adminRoutes);
 app.use(shopRoutes);
 
 // Handle 404 errors
 app.use(NotFoundController);
 
-User.hasMany(Product);
-Product.belongsTo(User, { constraints: true, onDelete: "CASCADE" });
+User.hasMany(Product, { foreignKey: "userId" });
+Product.belongsTo(User, {
+	foreignKey: "userId",
+	constraints: true,
+	onDelete: "CASCADE",
+});
+
+User.hasOne(Cart, { foreignKey: "userId" });
+Cart.belongsTo(User, { foreignKey: "userId" });
+
+Cart.belongsToMany(Product, { through: CartItem, foreignKey: "cartId" });
+Product.belongsToMany(Cart, { through: CartItem, foreignKey: "productId" });
+
+Order.belongsTo(User, { foreignKey: "userId" });
+User.hasMany(Order, { foreignKey: "userId" });
+
+Order.belongsToMany(Product, { through: OrderItem, foreignKey: "orderId" });
 
 sequlize
-	.sync({ force: false })
+	.sync({ force: true })
 	.then(async () => {
 		console.log("Database synced successfully.");
 
-		await createDefaultUser(DEFAULT_USER_ID);
+		const user = await createDefaultUser(DEFAULT_USER_ID);
+		const cart = await user.getCart();
+		if (cart === null) {
+			await user.createCart();
+		}
 
 		app.listen(PORT, () => {
 			console.log(`Server is running on http://localhost:${PORT}`);

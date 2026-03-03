@@ -2,17 +2,22 @@ import sequelize from "../utils/db.ts";
 import {
 	DataTypes,
 	Model,
+	type BelongsToCreateAssociationMixin,
+	type BelongsToGetAssociationMixin,
+	type BelongsToSetAssociationMixin,
 	type CreationOptional,
 	type ForeignKey,
 	type InferAttributes,
 	type InferCreationAttributes,
-    type NonAttribute,
+	type NonAttribute,
 } from "sequelize";
 import type User from "./user.ts";
+import type CartItem from "./cart-item.ts";
+import type OrderItem from "./order-item.ts";
 
 class Product extends Model<
-	InferAttributes<Product>,
-	InferCreationAttributes<Product>
+	InferAttributes<Product, { omit: "user" }>,
+	InferCreationAttributes<Product, { omit: "user" }>
 > {
 	declare id: CreationOptional<string>;
 
@@ -21,12 +26,18 @@ class Product extends Model<
 	declare description: string;
 	declare price: number;
 
-    declare user?: NonAttribute<User>;
+	declare user?: NonAttribute<User>;
 	declare userId: ForeignKey<User["id"]>;
+	declare getUser: BelongsToGetAssociationMixin<User>;
+	declare setUser: BelongsToSetAssociationMixin<User, string>;
+	declare createUser: BelongsToCreateAssociationMixin<User>;
 
 	// timestamps!
 	declare createdAt: CreationOptional<Date>;
 	declare updatedAt: CreationOptional<Date>;
+
+	declare CartItem?: NonAttribute<CartItem>;
+	declare OrderItem?: NonAttribute<OrderItem>;
 }
 
 Product.init(
@@ -53,6 +64,7 @@ Product.init(
 		imageUrl: {
 			type: DataTypes.STRING,
 			allowNull: false,
+			validate: { isUrl: true },
 		},
 		createdAt: DataTypes.DATE,
 		updatedAt: DataTypes.DATE,
