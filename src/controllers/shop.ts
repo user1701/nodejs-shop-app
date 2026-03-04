@@ -95,8 +95,7 @@ export const deleteCartProduct = async (req: Request, res: Response) => {
 // -- Order Controllers
 export const getOrder = async (req: Request, res: Response) => {
 	const orders = await req.user.getOrders({
-		include: [Product],
-		raw: true,
+		include: ["Products"],
 		nest: true,
 	});
 
@@ -105,18 +104,17 @@ export const getOrder = async (req: Request, res: Response) => {
 
 export const createOrder = async (req: Request, res: Response) => {
 	const cart = await req.user.getCart();
-	const products = await cart.getProducts({ raw: true, nest: true });
+	const products = await cart.getProducts();
 
 	const order = await req.user.createOrder();
 
 	await order.addProducts(
-		// products.map((product) => {
-		// 	product.OrderItem = {
-		// 		quantity: product.CartItem!.quantity,
-		// 	} as OrderItem;
-		// 	return product;
-		// })
-        products
+		products.map((product) => {
+			product.OrderItem = {
+				quantity: product.CartItem!.quantity,
+			} as OrderItem;
+			return product;
+		})
 	);
 
 	cart.setProducts(null);

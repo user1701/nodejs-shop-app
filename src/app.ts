@@ -68,10 +68,22 @@ Product.belongsToMany(Cart, { through: CartItem, foreignKey: "productId" });
 Order.belongsTo(User, { foreignKey: "userId" });
 User.hasMany(Order, { foreignKey: "userId" });
 
-Order.belongsToMany(Product, { through: OrderItem, foreignKey: "orderId" });
+// both sides of a many-to-many need to be wired up and we explicitly
+// specify the alias to avoid any ambiguity.  earlier we only registered
+// the Order -> Product association which meant Sequelize gave the
+// relationship a default name based on the model.  in some situations the
+// default alias is not what the accessors expect, leading to runtime
+// errors such as "Association with alias \"products\" does not exist on
+// Order" when calling `order.addProducts`.
+
+Order.belongsToMany(Product, {
+	through: OrderItem,
+	foreignKey: "orderId",
+});
 
 sequlize
-	.sync({ force: true })
+	.sync()
+	// .sync({ force: true })
 	.then(async () => {
 		console.log("Database synced successfully.");
 
