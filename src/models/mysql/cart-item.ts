@@ -6,7 +6,7 @@ import {
 	type InferAttributes,
 	type InferCreationAttributes,
 } from "sequelize";
-import sequelize from "../utils/db.ts";
+import sequelize from "../../utils/db.ts";
 import type Cart from "./cart.ts";
 import type Product from "./product.ts";
 

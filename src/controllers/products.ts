@@ -1,23 +1,21 @@
 import type { Request, Response } from "express";
-import Product from "../models/product.ts";
+import { Product } from "@/models/product.ts";
 
 export const getProducts = async (req: Request, res: Response) => {
 	const products = await Product.findAll();
-	console.log(`Fetched ${products.length} products from database.`);
-
+	console.log("Products fetched from database:", products);
+	// console.log(`Fetched ${products.length} products.`);
 	res.render("shop", { products, path: req.path });
 };
 
 export const getMyProducts = async (req: Request, res: Response) => {
-	if (!req.user) {
-		return res.status(401).send("Unauthorized: No user logged in.");
-	}
+	// if (!req.user) {
+	// 	return res.status(401).send("Unauthorized: No user logged in.");
+	// }
 
-	const products = await req.user.getProducts();
-	console.log(`Fetched ${products.length} products for user ${req.user.id}.`);
-
+	// const products = await req.user.getProducts();
 	res.render("shop", {
-		products,
+		products: [],
 		path: req.path,
 		title: "My Products",
 	});
@@ -32,7 +30,7 @@ export const getProduct = async (req: Request, res: Response) => {
 	}
 
 	try {
-		const product = await Product.findOne({ where: { id: productId } });
+		const product = await Product.findOne(productId);
 		console.log("Product fetched from database:", product);
 
 		if (!product) {
@@ -72,16 +70,17 @@ export const postAddProduct = async (req: Request, res: Response) => {
 	const imageData = (await image.json()) as { message: string };
 	const productImageUrl = imageData.message;
 
-	try {
-		const newProduct = await req.user.createProduct({
-			title,
-			imageUrl: imageUrl || productImageUrl,
-			description,
-			price: parseFloat(price),
-		});
-		// const newProduct = await Product.create(product);
-		console.log("Product added with ID: ", newProduct);
+	const product = new Product({
+		title,
+		imageUrl: imageUrl || productImageUrl,
+		description,
+		price: parseFloat(price),
+		userId: req.user ? req.user._id : "unknown",
+	});
 
+	try {
+		await product.save();
+		console.log("Product saved successfully:", product);
 		res.redirect("/");
 	} catch (err: unknown) {
 		console.error("Error adding product:", err);
@@ -96,7 +95,7 @@ export const getEditProduct = async (req: Request, res: Response) => {
 		return res.status(400).send("Product ID is required.");
 	}
 	try {
-		const [product] = await req.user.getProducts({ where: { id: productId } });
+		const product = await Product.findOne(productId);
 		if (!product) {
 			return res.status(404).send("Product not found.");
 		}
@@ -116,18 +115,16 @@ export const updateProduct = async (req: Request, res: Response) => {
 	}
 
 	try {
-		const [affectedRows] = await Product.update(
-			{
-				title,
-				imageUrl,
-				description,
-				price,
-			},
-			{ where: { id } }
-		);
-		if (affectedRows === 0) {
-			return res.status(404).send("Product not found or no changes made.");
-		}
+		const product = new Product({
+			title,
+			imageUrl,
+			description,
+			price,
+			id,
+            userId: req.user ? req.user._id : "unknown",
+		});
+
+		await product.save();
 
 		res.status(200).send("Product updated successfully.");
 	} catch (err: unknown) {
@@ -139,24 +136,16 @@ export const updateProduct = async (req: Request, res: Response) => {
 export const deleteProduct = async (req: Request, res: Response) => {
 	const productId = req.params.id;
 	console.log(`Deleting product with ID: ${productId}`);
+
 	if (!productId) {
 		return res.status(400).send("Product ID is required.");
 	}
 
 	try {
-		const result = await req.user
-			.getProducts({ where: { id: productId } })
-			.then(([product]) => {
-				if (product) {
-					product.destroy();
-					return product.id;
-				}
-				return 0;
-			});
-		// const result = await Product.destroy({ where: { id: productId } });
+		const result = await Product.deleteById(productId);
 		console.log("Delete operation result:", result);
 
-		if (result === 0) {
+		if (result?.deletedCount === 0) {
 			return res.status(404).send("Product not found.");
 		}
 

@@ -1,6 +1,6 @@
 @if (product)
     <form action="/products" method="PUT">
-        <input type="hidden" name="id" value={{product.id}} />
+        <input type="hidden" name="id" value={{product._id}} />
         <div class="input-group">
             <label for="title">Product Title:</label>
             <input type="text" id="title" name="title" required {{

@@ -1,138 +1,161 @@
-import sequelize from "../utils/db.ts";
-import {
-	Association,
-	DataTypes,
-	Model,
-	type BelongsToCreateAssociationMixin,
-	type BelongsToGetAssociationMixin,
-	type BelongsToSetAssociationMixin,
-	type CreationOptional,
-	type HasManyAddAssociationMixin,
-	type HasManyAddAssociationsMixin,
-	type HasManyCountAssociationsMixin,
-	type HasManyCreateAssociationMixin,
-	type HasManyGetAssociationsMixin,
-	type HasManyHasAssociationMixin,
-	type HasManyHasAssociationsMixin,
-	type HasManyRemoveAssociationMixin,
-	type HasManyRemoveAssociationsMixin,
-	type HasManySetAssociationsMixin,
-	type InferAttributes,
-	type InferCreationAttributes,
-	type NonAttribute,
-} from "sequelize";
-import Product from "./product.ts";
-import type Cart from "./cart.ts";
-import type Order from "./order.ts";
+import { getDb, isSameProduct } from "@/utils/mongoDB.ts";
+import { ObjectId } from "mongodb";
 
-class User extends Model<
-	InferAttributes<User, { omit: "products" | "cart" }>,
-	InferCreationAttributes<User, { omit: "products" | "cart" }>
-> {
-	declare id: CreationOptional<string>;
-	declare name: string;
-	declare email: string;
-	declare password: string;
-
-	// timestamps!
-	// createdAt can be undefined during creation
-	// updatedAt can be undefined during creation
-	declare createdAt: CreationOptional<Date>;
-	declare updatedAt: CreationOptional<Date>;
-	declare deletedAt: CreationOptional<Date>;
-
-	// Since TS cannot determine model association at compile time
-	// we have to declare them here purely virtually
-	// these will not exist until `Model.init` was called.
-	// https://sequelize.org/docs/v6/core-concepts/assocs/#special-methodsmixins-added-to-instances
-
-	// Product mixins
-	declare products?: NonAttribute<Product[]>;
-	declare getProducts: HasManyGetAssociationsMixin<Product>;
-	declare addProduct: HasManyAddAssociationMixin<Product, string>;
-	declare addProducts: HasManyAddAssociationsMixin<Product, string>;
-	declare setProducts: HasManySetAssociationsMixin<Product, string>;
-	declare removeProduct: HasManyRemoveAssociationMixin<Product, string>;
-	declare removeProducts: HasManyRemoveAssociationsMixin<Product, string>;
-	declare hasProduct: HasManyHasAssociationMixin<Product, string>;
-	declare hasProducts: HasManyHasAssociationsMixin<Product, string>;
-	declare countProducts: HasManyCountAssociationsMixin;
-	declare createProduct: HasManyCreateAssociationMixin<Product, "userId">;
-
-	// Possible inclusions from other associations
-	declare cart?: NonAttribute<Cart>;
-	declare getCart: BelongsToGetAssociationMixin<Cart>;
-	declare setCart: BelongsToSetAssociationMixin<Cart, string>;
-	declare createCart: BelongsToCreateAssociationMixin<Cart>;
-
-    declare orders?: NonAttribute<Order[]>;
-    declare getOrders: HasManyGetAssociationsMixin<Order>;
-    declare createOrder: HasManyCreateAssociationMixin<Order, "userId">;
-
-	declare static associations: {
-		products: Association<User, Product>;
-		cart: Association<User, Cart>;
-		orders: Association<User, Order>;
-	};
+interface ICart {
+	items: Array<ICartItem>;
 }
 
-User.init(
-	{
-		id: {
-			type: DataTypes.UUID,
-			primaryKey: true,
-			allowNull: false,
-			defaultValue: DataTypes.UUIDV4,
-			unique: true,
-		},
-		name: {
-			type: DataTypes.STRING,
-			allowNull: false,
-		},
-		email: {
-			type: DataTypes.STRING,
-			allowNull: false,
-			unique: true,
-			validate: {
-				isEmail: true,
-			},
-		},
-		password: {
-			type: DataTypes.STRING,
-			allowNull: false,
-		},
-		createdAt: DataTypes.DATE,
-		updatedAt: DataTypes.DATE,
-		deletedAt: DataTypes.DATE,
-	},
-	{
-		tableName: "users",
-		timestamps: true,
-		paranoid: true,
-		sequelize,
-	}
-);
+interface ICartItem {
+	id: ObjectId;
+	quantity: number;
+}
 
-export async function createDefaultUser(userId: string, log: boolean = false) {
-	const [user, created] = await User.findOrCreate({
-		where: { id: userId },
-		defaults: {
-			id: userId,
-			email: "ivan@gmail.com",
-			name: "Ivan",
-			password: "test123",
-		},
-	});
+export class User {
+	name: string;
+	email: string;
+	password: string;
+	_id?: ObjectId = undefined;
+	cart: ICart = { items: [] };
 
-	if (log) {
-		if (created) {
-			console.log("Default user created:", user.toJSON());
-		} else {
-			console.log("Default user already exists:", user.toJSON());
+	constructor({ name, email, password, _id, cart = { items: [] } }: User) {
+		this.name = name;
+		this.email = email;
+		this.password = password;
+		this.cart = cart;
+		if (_id) {
+			this._id = _id;
 		}
 	}
 
-	return user;
-}
+	save() {
+		const db = getDb();
+		return db
+			?.collection("users")
+			.insertOne(this)
+			.then((result) => {
+				console.log("User saved to database:", result);
+				return result;
+			})
+			.catch((err) => {
+				console.error("Error saving user to database:", err);
+				throw err;
+			});
+	}
 
-export default User;
+	getCart() {
+		const db = getDb();
+		return db
+			?.collection("products")
+			.find({ _id: { $in: this.cart.items.map((item) => item.id) } })
+			.toArray()
+			.then((products) => {
+				return products.map((product) => {
+					const cartItem = this.cart.items.find((item) =>
+						isSameProduct(item.id, product._id)
+					);
+					return { ...product, quantity: cartItem ? cartItem.quantity : 1 };
+				});
+			})
+			.catch((err) => {
+				console.error("Error fetching cart products from database:", err);
+				return [];
+			});
+	}
+
+	addCartItem(id: string) {
+		const newCartItem: ICartItem = {
+			id: new ObjectId(id),
+			quantity: 1,
+		};
+
+		const newCartItemIdx = this.cart.items.findIndex(
+			(item) => item.id.toString() === id
+		);
+		if (newCartItemIdx >= 0) {
+			this.cart.items[newCartItemIdx]!.quantity += 1;
+		} else {
+			this.cart.items.push(newCartItem);
+		}
+
+		const db = getDb();
+		return db
+			?.collection<User>("users")
+			.updateOne({ _id: new ObjectId(this._id) }, { $set: { cart: this.cart } })
+			.catch((err) => {
+				console.error("Error updating user cart in database:", err);
+				throw err;
+			});
+	}
+
+	deleteCartItem(id: string) {
+		this.cart.items = this.cart.items.filter(
+			(item) => item.id.toString() !== id
+		);
+
+		const db = getDb();
+		return db
+			?.collection<User>("users")
+			.updateOne({ _id: new ObjectId(this._id) }, { $set: { cart: this.cart } })
+			.catch((err) => {
+				console.error("Error updating user cart in database:", err);
+				throw err;
+			});
+	}
+
+	getOrders() {
+		const db = getDb();
+		return db
+			?.collection("orders")
+			.find({ "user._id": new ObjectId(this._id) })
+			.toArray()
+			.then((orders) => orders)
+			.catch((err) => {
+				console.error("Error fetching user orders from database:", err);
+				return [];
+			});
+	}
+
+	placeOrder() {
+		const db = getDb();
+
+		this.getCart()
+			?.then((products) => {
+				if (!products || products.length === 0) {
+					console.warn("No products in cart to place an order.");
+					return;
+				}
+				const order = {
+					items: products,
+					user: { _id: new ObjectId(this._id), name: this.name },
+				};
+
+				db?.collection("orders").insertOne(order);
+			})
+			.then(() => {
+				console.log("Order saved to database:");
+				this.cart = { items: [] };
+				return db
+					?.collection<User>("users")
+					.updateOne(
+						{ _id: new ObjectId(this._id) },
+						{ $set: { cart: this.cart } }
+					);
+			})
+			.catch((err) => {
+				console.error("Error saving order to database:", err);
+				throw err;
+			});
+	}
+
+	static findById(id: string) {
+		const db = getDb();
+		return db
+			?.collection<User>("users")
+			.findOne({ _id: new ObjectId(id) })
+			.then((user) => user)
+			.catch((err) => {
+				console.error(`Error fetching user with ID ${id} from database:`, err);
+				return null;
+			});
+	}
+}

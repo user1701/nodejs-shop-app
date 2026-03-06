@@ -1,80 +1,106 @@
-import sequelize from "../utils/db.ts";
-import {
-	DataTypes,
-	Model,
-	type BelongsToCreateAssociationMixin,
-	type BelongsToGetAssociationMixin,
-	type BelongsToSetAssociationMixin,
-	type CreationOptional,
-	type ForeignKey,
-	type InferAttributes,
-	type InferCreationAttributes,
-	type NonAttribute,
-} from "sequelize";
-import type User from "./user.ts";
-import type CartItem from "./cart-item.ts";
-import type OrderItem from "./order-item.ts";
+import { getDb } from "@/utils/mongoDB.ts";
+import { ObjectId } from "mongodb";
 
-class Product extends Model<
-	InferAttributes<Product, { omit: "user" }>,
-	InferCreationAttributes<Product, { omit: "user" }>
-> {
-	declare id: CreationOptional<string>;
+export class Product {
+	title: string;
+	imageUrl: string;
+	description: string;
+	price: number;
+	userId: string;
+	_id?: ObjectId;
 
-	declare title: string;
-	declare imageUrl: string;
-	declare description: string;
-	declare price: number;
-
-	declare user?: NonAttribute<User>;
-	declare userId: ForeignKey<User["id"]>;
-	declare getUser: BelongsToGetAssociationMixin<User>;
-	declare setUser: BelongsToSetAssociationMixin<User, string>;
-	declare createUser: BelongsToCreateAssociationMixin<User>;
-
-	// timestamps!
-	declare createdAt: CreationOptional<Date>;
-	declare updatedAt: CreationOptional<Date>;
-
-	declare CartItem?: NonAttribute<CartItem>;
-	declare OrderItem?: NonAttribute<OrderItem>;
-}
-
-Product.init(
-	{
-		id: {
-			type: DataTypes.UUID,
-			primaryKey: true,
-			allowNull: false,
-			defaultValue: DataTypes.UUIDV4,
-			unique: true,
-		},
-		title: {
-			type: DataTypes.STRING,
-			allowNull: false,
-		},
-		price: {
-			type: DataTypes.DOUBLE,
-			allowNull: false,
-		},
-		description: {
-			type: DataTypes.STRING,
-			allowNull: false,
-		},
-		imageUrl: {
-			type: DataTypes.STRING,
-			allowNull: false,
-			validate: { isUrl: true },
-		},
-		createdAt: DataTypes.DATE,
-		updatedAt: DataTypes.DATE,
-	},
-	{
-		tableName: "products",
-		timestamps: true,
-		paranoid: true,
-		sequelize,
+	constructor({
+		title,
+		imageUrl,
+		description,
+		price,
+		userId,
+		id = undefined,
+	}: {
+		title: string;
+		imageUrl: string;
+		description: string;
+		price: number;
+		userId: string;
+		id?: string;
+	}) {
+		this.title = title;
+		this.imageUrl = imageUrl;
+		this.description = description;
+		this.price = price;
+		this.userId = userId;
+		if (id) {
+			this._id = new ObjectId(id);
+		}
 	}
-);
 
-export default Product;
+	static findAll() {
+		const db = getDb();
+		return db
+			?.collection("products")
+			.find()
+			.toArray()
+			.then((products) => products)
+			.catch((err) => {
+				console.error("Error fetching products from database:", err);
+				return [];
+			});
+	}
+
+	static findOne(id: string) {
+		const db = getDb();
+		return db
+			?.collection("products")
+			.findOne({ _id: new ObjectId(id) })
+			.then((product) => product)
+			.catch((err) => {
+				console.error(
+					`Error fetching product with ID ${id} from database:`,
+					err
+				);
+				return null;
+			});
+	}
+
+	static deleteById(id: string) {
+		const db = getDb();
+		return db
+			?.collection("products")
+			.deleteOne({ _id: new ObjectId(id) })
+			.then((result) => {
+				console.log(`Product with ID ${id} deleted from database:`, result);
+				return result;
+			})
+			.catch((err) => {
+				console.error(
+					`Error deleting product with ID ${id} from database:`,
+					err
+				);
+			});
+	}
+
+	save() {
+		const db = getDb();
+		const collection = db?.collection("products");
+
+		if (this._id) {
+			return collection!
+				.updateOne({ _id: this._id }, { $set: this })
+				.then((result) => {
+					console.log("Product updated in database:", result);
+				})
+				.catch((err) => {
+					console.error("Error updating product to database:", err);
+				});
+		}
+
+		return collection!
+			.insertOne(this)
+			.then((result) => {
+				console.log("Product saved to database:", result);
+			})
+			.catch((err) => {
+				console.error("Error saving product to database:", err);
+			});
+	}
+}

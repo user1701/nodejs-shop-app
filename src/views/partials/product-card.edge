@@ -9,7 +9,7 @@
 
     <section class="product-card__body">
         <h3 class="product-card__title">
-            <a href="/products/{{ product.id }}" class="product-card__title-link">
+            <a href="/products/{{ product_id }}" class="product-card__title-link">
                 {{product.title }}
             </a>
         </h3>
@@ -18,12 +18,12 @@
     </section>
 
     <footer class="product-card__footer">
-        <button class="product-card__button small primary" onclick="addToCart('{{ product.id }}')">Add to Cart</button>
+        <button class="product-card__button small primary" onclick="addToCart('{{ product._id }}')">Add to Cart</button>
         <hr />
 
-        <button class="product-card__button small danger" onclick="deleteProduct('{{ product.id }}')">Delete</button>
-        <a class="product-card__button small" href="/products/edit/{{ product.id }}">Edit</a>
-        <a class="product-card__button small" href="/products/{{ product.id }}">View Details</a>
+        <button class="product-card__button small danger" onclick="deleteProduct('{{ product._id }}')">Delete</button>
+        <a class="product-card__button small" href="/products/edit/{{ product._id }}">Edit</a>
+        <a class="product-card__button small" href="/products/{{ product._id }}">View Details</a>
     </footer>
 </div>
 

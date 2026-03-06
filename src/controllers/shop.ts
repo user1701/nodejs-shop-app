@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
-import Product from "../models/product.ts";
-import type OrderItem from "@/models/order-item.ts";
-import type Order from "@/models/order.ts";
+import { Product } from "@/models/product.ts";
+import type OrderItem from "@/models/mysql/order-item.ts";
+import type Order from "@/models/mysql/order.ts";
 
 export const getShopHome = async (req: Request, res: Response) => {
 	try {
@@ -25,19 +25,16 @@ export const getCheckout = async (req: Request, res: Response) => {
 // -- Cart Controllers
 export const getCart = async (req: Request, res: Response) => {
 	const cart = await req.user.getCart();
-	const products = await cart.getProducts({ nest: true });
 
-	console.log("Cart fetched:", cart?.toJSON());
+	console.log("Cart fetched:", cart);
 
-	const jsonProducts = products.map((p) => p.toJSON());
-	console.log("Cart products (JSON):", jsonProducts);
-	const total = jsonProducts.reduce(
-		(sum, product) => product.price * product.CartItem.quantity + sum,
+	const total = cart.reduce(
+		(sum, product) => product.price * product.quantity + sum,
 		0
 	);
 
 	res.render("cart", {
-		cart: jsonProducts,
+		cart,
 		total: total.toFixed(2),
 		path: req.path,
 	});
@@ -52,16 +49,7 @@ export const addCartProduct = async (req: Request, res: Response) => {
 	}
 
 	try {
-		const cart = await req.user.getCart();
-		const [product] = await cart.getProducts({ where: { id: productId } });
-
-		if (!product) {
-			await cart.addProduct(productId);
-		} else {
-			await cart.addProduct(productId, {
-				through: { quantity: (product.CartItem?.quantity || 1) + 1 },
-			});
-		}
+		await req.user.addCartItem(productId);
 
 		res.status(204).send("product added to cart");
 	} catch (err: unknown) {
@@ -74,16 +62,7 @@ export const deleteCartProduct = async (req: Request, res: Response) => {
 	const productId = req.params.id;
 
 	try {
-		const cart = await req.user.getCart();
-		const [product] = await cart.getProducts({
-			where: {
-				id: productId,
-			},
-		});
-
-		if (product) {
-			product.CartItem?.destroy();
-		}
+		await req.user.deleteCartItem(productId);
 
 		res.redirect("/cart");
 	} catch (err: unknown) {
@@ -94,32 +73,14 @@ export const deleteCartProduct = async (req: Request, res: Response) => {
 
 // -- Order Controllers
 export const getOrder = async (req: Request, res: Response) => {
-	const orders = await req.user.getOrders({
-		include: ["Products"],
-		nest: true,
-	});
+	const orders = await req.user.getOrders();
 
 	res.render("orders", { path: req.path, orders });
 };
 
 export const createOrder = async (req: Request, res: Response) => {
-	const cart = await req.user.getCart();
-	const products = await cart.getProducts();
-
-	const order = await req.user.createOrder();
-
-	await order.addProducts(
-		products.map((product) => {
-			product.OrderItem = {
-				quantity: product.CartItem!.quantity,
-			} as OrderItem;
-			return product;
-		})
-	);
-
-	cart.setProducts(null);
-
-	console.log("Order created:", order.toJSON());
+	await req.user.placeOrder();
+	console.log("Order created successfully");
 
 	res.redirect("/orders");
 };

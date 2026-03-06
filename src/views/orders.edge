@@ -6,21 +6,21 @@
 <div class="cart__wrapper">
     @each(order in orders)
     <div class="cart__product">
-        <div >
-            <h4 class="">{{ order.id }}</h4>
+        <div>
+            <h4 class="">{{ order._id }}</h4>
             <div>
-            <strong>Products:</strong>
-            @each(product in order.Products)
-            <div>title: {{ product.title }}</div>
-            <div class="cart__product-qty"><b>quantity: </b>{{ product.OrderItem.quantity }}</div>
-            <div class="cart__product-price">price: ${{ product.price }}</div>
-            @end
+                <strong>Products:</strong>
+                @each(product in order.items)
+                <div>title: {{ product.title }}</div>
+                <div class="cart__product-qty"><b>quantity: </b>{{ product.quantity }}</div>
+                <div class="cart__product-price">price: ${{ product.price }}</div>
+                @end
             </div>
+        </div>
     </div>
-</div>
-@else
-<h4>No orders yet</h4>
-@end
+    @else
+    <h4>No orders yet</h4>
+    @end
 </div>
 @if(total > 0)
 <hr />

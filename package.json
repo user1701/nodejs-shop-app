@@ -32,6 +32,7 @@
 		"body-parser": "^2.2.2",
 		"edge.js": "^6.3.0",
 		"express": "^5.1.0",
+		"mongodb": "^7.1.0",
 		"mysql2": "^3.14.4",
 		"sequelize": "^6.37.7",
 		"uuid": "^11.1.0"

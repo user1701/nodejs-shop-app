@@ -12,6 +12,7 @@ import {
 	type BelongsToManyRemoveAssociationMixin,
 	type BelongsToManyRemoveAssociationsMixin,
 	type BelongsToManySetAssociationsMixin,
+	type BelongsToManySetAssociationsMixinOptions,
 	type CreationOptional,
 	type ForeignKey,
 	type HasManyAddAssociationMixin,
@@ -24,20 +25,18 @@ import {
 	type HasManyRemoveAssociationMixin,
 	type HasManyRemoveAssociationsMixin,
 	type HasManySetAssociationsMixin,
-	type HasOneCreateAssociationMixin,
 	type HasOneGetAssociationMixin,
-	type HasOneSetAssociationMixin,
 	type InferAttributes,
 	type InferCreationAttributes,
 	type NonAttribute,
 } from "sequelize";
-import sequelize from "../utils/db.ts";
+import sequelize from "../../utils/db.ts";
 import type Product from "./product.ts";
 import type User from "./user.ts";
 
-class Cart extends Model<
-	InferAttributes<Cart, { omit: "products" | "user" }>,
-	InferCreationAttributes<Cart, { omit: "products" | "user" }>
+class Order extends Model<
+	InferAttributes<Order>,
+	InferCreationAttributes<Order>
 > {
 	declare id: CreationOptional<string>;
 
@@ -48,10 +47,8 @@ class Cart extends Model<
 	declare userId: ForeignKey<User["id"]>;
 	declare user?: NonAttribute<User>;
 	declare getUser: HasOneGetAssociationMixin<User>;
-	declare setUser: HasOneSetAssociationMixin<User, string>;
-	declare createUser: HasOneCreateAssociationMixin<User>;
 
-	declare products?: NonAttribute<Product[]>;
+	declare products?: Product[];
 	declare getProducts:
 		| HasManyGetAssociationsMixin<Product>
 		| BelongsToManyGetAssociationsMixin<Product>;
@@ -84,18 +81,18 @@ class Cart extends Model<
 		| BelongsToManyCreateAssociationMixin<Product>;
 
 	declare static associations: {
-		products: Association<Cart, Product>;
-		user: Association<Cart, User>;
+		products: Association<Order, Product>;
+		user: Association<Order, User>;
 	};
 }
 
-Cart.init(
+Order.init(
 	{
 		id: {
 			type: DataTypes.UUID,
 			primaryKey: true,
-			defaultValue: DataTypes.UUIDV4,
 			allowNull: false,
+			defaultValue: DataTypes.UUIDV4,
 			unique: true,
 		},
 		createdAt: DataTypes.DATE,
@@ -103,11 +100,11 @@ Cart.init(
 		deletedAt: DataTypes.DATE,
 	},
 	{
-		sequelize,
-		tableName: "cart",
+		tableName: "orders",
 		timestamps: true,
 		paranoid: true,
+		sequelize,
 	}
 );
 
-export default Cart;
+export default Order;
