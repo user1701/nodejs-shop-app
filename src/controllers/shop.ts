@@ -1,11 +1,10 @@
 import type { Request, Response } from "express";
-import { Product } from "@/models/product.ts";
-import type OrderItem from "@/models/mysql/order-item.ts";
-import type Order from "@/models/mysql/order.ts";
+import Product from "@/models/product.ts";
+import Order from "@/models/order.ts";
 
 export const getShopHome = async (req: Request, res: Response) => {
 	try {
-		const products = await Product.findAll();
+		const products = await Product.find();
 
 		res.render("home", { products, path: req.path });
 	} catch (err: unknown) {
@@ -24,12 +23,14 @@ export const getCheckout = async (req: Request, res: Response) => {
 
 // -- Cart Controllers
 export const getCart = async (req: Request, res: Response) => {
-	const cart = await req.user.getCart();
+	const cart = await req.user
+		.populate("cart.items.id")
+		.then((user) => user.cart.items);
 
 	console.log("Cart fetched:", cart);
 
 	const total = cart.reduce(
-		(sum, product) => product.price * product.quantity + sum,
+		(sum, product) => product.id.price * product.quantity + sum,
 		0
 	);
 
@@ -73,14 +74,32 @@ export const deleteCartProduct = async (req: Request, res: Response) => {
 
 // -- Order Controllers
 export const getOrder = async (req: Request, res: Response) => {
-	const orders = await req.user.getOrders();
+	const orders = await Order.find({ user: req.user._id });
 
 	res.render("orders", { path: req.path, orders });
 };
 
 export const createOrder = async (req: Request, res: Response) => {
-	await req.user.placeOrder();
-	console.log("Order created successfully");
+	req.user
+		.populate("cart.items.id")
+		.then((user) => {
+			return user.cart.items;
+		})
+		.then((products) => {
+			const orderItems = products.map((item: any) => ({
+				quantity: item.quantity,
+				product: { ...item.id._doc },
+			}));
+			const order = new Order({
+				user: req.user._id,
+				items: orderItems,
+			});
+
+			console.log("Creating order with items:", order);
+			order.save();
+			req.user.cart.items = [];
+			return req.user.save();
+		});
 
 	res.redirect("/orders");
 };

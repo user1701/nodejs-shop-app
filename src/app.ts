@@ -9,8 +9,9 @@ import shopRoutes from "@/routes/shop.ts";
 import { NotFoundController } from "@/controllers/common.ts";
 
 import { DEFAULT_USER_ID } from "@/constants/user.ts";
-import { mongoConnect } from "@/utils/mongoDB.ts";
-import { User } from "@/models/user.ts";
+import { MONGO_URI } from "./constants/db.ts";
+import User from "@/models/user.ts";
+import mongoose from "mongoose";
 
 const PORT = process.env.PORT || 3001;
 
@@ -44,15 +45,15 @@ app.use(shopRoutes);
 // Handle 404 errors
 app.use(NotFoundController);
 
-mongoConnect()
-	.then((client) => {
-		console.log("MongoDB ready, starting server");
-	})
-	.catch((err) => {
-		console.error("Failed to connect to MongoDB:", err);
-	})
-	.finally(() => {
+mongoose
+	.connect(MONGO_URI)
+	.then(() => {
+		console.log("Connected to MongoDB");
 		app.listen(PORT, () => {
 			console.log(`Server is running on port ${PORT}`);
 		});
+	})
+	.catch((err) => {
+		console.error("Error connecting to MongoDB:", err);
+		process.exit(1);
 	});
