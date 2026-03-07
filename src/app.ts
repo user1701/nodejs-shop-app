@@ -1,9 +1,8 @@
 import express from "express";
-import type { NextFunction, Request, Response } from "express";
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 import session from "express-session";
-import MongoDBStore from "connect-mongodb-session";
+import MongoStore from "connect-mongo";
 
 import { renderFile } from "@/utils/edgeEngine.ts";
 
@@ -12,9 +11,7 @@ import shopRoutes from "@/routes/shop.ts";
 import authRoutes from "@/routes/auth.ts";
 import { NotFoundController } from "@/controllers/common.ts";
 
-import { DEFAULT_USER_ID } from "@/constants/user.ts";
 import { MONGO_URI } from "./constants/db.ts";
-import User from "@/models/user.ts";
 import mongoose from "mongoose";
 
 const PORT = process.env.PORT || 3001;
@@ -25,39 +22,21 @@ app.set("view engine", "edge");
 app.set("views", "src/views");
 app.use(express.static("public"));
 
-const SessionStore = MongoDBStore(session);
-const store = new SessionStore({
-	uri: MONGO_URI,
-	databaseName: "shop",
-	collection: "sessions",
-});
-
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(
 	session({
-		secret: "your-secret-key",
+		secret: process.env.SESSION_SECRET || "your-secret-key",
 		resave: false,
 		saveUninitialized: false,
-		store,
+		store: MongoStore.create({
+			mongoUrl: MONGO_URI,
+			dbName: "shop",
+			collectionName: "sessions",
+		}),
 	})
 );
-
-app.use(async (req: Request, res: Response, next: NextFunction) => {
-	try {
-		const user = await User.findById(DEFAULT_USER_ID);
-		if (user) {
-			req.user = new User(user);
-		} else {
-			console.log("User not found.");
-		}
-		next();
-	} catch (err) {
-		console.error("Error fetching user: ", err);
-		next();
-	}
-});
 
 app.use(adminRoutes);
 app.use(shopRoutes);
