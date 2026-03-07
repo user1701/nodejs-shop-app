@@ -4,7 +4,11 @@ import cookieParser from "cookie-parser";
 import session from "express-session";
 import MongoStore from "connect-mongo";
 
-import { renderFile } from "@/utils/edgeEngine.ts";
+import {
+	edgeInstance,
+	getRenderInstance,
+	renderFile,
+} from "@/utils/edgeEngine.ts";
 
 import adminRoutes from "@/routes/admin.ts";
 import shopRoutes from "@/routes/shop.ts";

@@ -7,7 +7,11 @@ export const getShopHome = async (req: Request, res: Response) => {
 	try {
 		const products = await Product.find();
 
-		res.render("home", { products, path: req.path });
+		res.render("home", {
+			products,
+			path: req.path,
+			isAuthenticated: req.session.isAuthenticated,
+		});
 	} catch (err: unknown) {
 		console.error("Error fetching products:", err);
 		return res.status(500).send("Internal server error.");
@@ -15,11 +19,18 @@ export const getShopHome = async (req: Request, res: Response) => {
 };
 
 export const getAddProduct = async (req: Request, res: Response) => {
-	res.render("admin", { path: req.path });
+	res.render("admin", {
+		path: req.path,
+		isAuthenticated: req.session.isAuthenticated,
+		title: "Add Product",
+	});
 };
 
 export const getCheckout = async (req: Request, res: Response) => {
-	res.render("checkout", { path: req.path });
+	res.render("checkout", {
+		path: req.path,
+		isAuthenticated: req.session.isAuthenticated,
+	});
 };
 
 // -- Cart Controllers
@@ -39,6 +50,7 @@ export const getCart = async (req: Request, res: Response) => {
 		cart,
 		total: total.toFixed(2),
 		path: req.path,
+		isAuthenticated: req.session.isAuthenticated,
 	});
 };
 
@@ -81,7 +93,11 @@ export const deleteCartProduct = async (req: Request, res: Response) => {
 export const getOrder = async (req: Request, res: Response) => {
 	const orders = await Order.find({ user: req.session.user._id });
 
-	res.render("orders", { path: req.path, orders });
+	res.render("orders", {
+		path: req.path,
+		orders,
+		isAuthenticated: req.session.isAuthenticated,
+	});
 };
 
 export const createOrder = async (req: Request, res: Response) => {

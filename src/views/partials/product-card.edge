@@ -18,11 +18,13 @@
     </section>
 
     <footer class="product-card__footer">
-        <button class="product-card__button small primary" onclick="addToCart('{{ product._id }}')">Add to Cart</button>
-        <hr />
+        @if(isAuthenticated)
+            <button class="product-card__button small primary" onclick="addToCart('{{ product._id }}')">Add to Cart</button>
+            <hr />
 
-        <button class="product-card__button small danger" onclick="deleteProduct('{{ product._id }}')">Delete</button>
-        <a class="product-card__button small" href="/products/edit/{{ product._id }}">Edit</a>
+            <button class="product-card__button small danger" onclick="deleteProduct('{{ product._id }}')">Delete</button>
+            <a class="product-card__button small" href="/products/edit/{{ product._id }}">Edit</a>
+        @end
         <a class="product-card__button small" href="/products/{{ product._id }}">View Details</a>
     </footer>
 </div>

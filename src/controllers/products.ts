@@ -5,7 +5,11 @@ export const getProducts = async (req: Request, res: Response) => {
 	const products = await Product.find();
 	console.log("Products fetched from database:", products);
 	// console.log(`Fetched ${products.length} products.`);
-	res.render("shop", { products, path: req.path });
+	res.render("shop", {
+		products,
+		path: req.path,
+		isAuthenticated: req.session.isAuthenticated,
+	});
 };
 
 export const getMyProducts = async (req: Request, res: Response) => {
@@ -18,6 +22,7 @@ export const getMyProducts = async (req: Request, res: Response) => {
 		products: products,
 		path: req.path,
 		title: "My Products",
+		isAuthenticated: req.session.isAuthenticated,
 	});
 };
 
@@ -37,7 +42,10 @@ export const getProduct = async (req: Request, res: Response) => {
 			return res.status(404).send("Product not found.");
 		} else {
 			console.log("Product found:", product);
-			res.render("product", { product });
+			res.render("product", {
+				product,
+				isAuthenticated: req.session.isAuthenticated,
+			});
 		}
 	} catch (err: unknown) {
 		console.error("Error fetching product:", err);
@@ -48,6 +56,7 @@ export const getProduct = async (req: Request, res: Response) => {
 export const getAddProduct = async (req: Request, res: Response) => {
 	res.render("add-product", {
 		path: req.path,
+		isAuthenticated: req.session.isAuthenticated,
 	});
 };
 
@@ -104,7 +113,10 @@ export const getEditProduct = async (req: Request, res: Response) => {
 			return res.status(404).send("Product not found.");
 		}
 
-		res.render("edit-product", { product: product });
+		res.render("edit-product", {
+			product: product,
+			isAuthenticated: req.session.isAuthenticated,
+		});
 	} catch (err: unknown) {
 		console.error("Error finding product:", err);
 		return res.status(500).send("Internal server error.");

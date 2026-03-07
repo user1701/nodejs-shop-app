@@ -9,7 +9,7 @@ export const login = async (req: Request, res: Response) => {
 		}
 
 		if (user.password !== password) {
-			return res.status(401).send("Invalid email or password.");
+			return res.status(401).send("Invalid password.");
 		}
 
 		req.session.isAuthenticated = true;
@@ -25,6 +25,7 @@ export const login = async (req: Request, res: Response) => {
 };
 
 export const logout = async (req: Request, res: Response) => {
+    console.log("Logging out user:", req.session.user);
 	req.session.destroy((err) => {
 		if (err) {
 			console.error("Session destroy error:", err);
