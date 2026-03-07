@@ -11,6 +11,20 @@ export const login = async (req: Request, res: Response) => {
 		if (!user) {
 			return res.status(401).send("Invalid email or password.");
 		}
+
+        if (user.password !== password) {
+            return res.status(401).send("Invalid email or password.");
+        }
+
+        req.session.isAuthenticated = true;
+        req.session.user = user;
+        req.session.save((err) => {
+            if (err) {
+                console.error("Session save error:", err);
+                return res.status(500).send("Internal server error.");
+            }
+            res.redirect("/");
+        });
 	});
 };
 
