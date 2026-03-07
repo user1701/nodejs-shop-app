@@ -1,4 +1,4 @@
-import { model, Schema, Types } from "mongoose";
+import { model, Schema, Types, type InferSchemaType } from "mongoose";
 
 interface ICartItem {
 	id: Types.ObjectId;
@@ -18,6 +18,8 @@ const UserSchema = new Schema({
 		items: [CartItemSchema],
 	},
 });
+
+export type UserType = InferSchemaType<typeof UserSchema>;
 
 UserSchema.methods.addCartItem = async function (productId: string) {
 	const cartItemIndex = this.cart.items.findIndex((item: ICartItem) =>

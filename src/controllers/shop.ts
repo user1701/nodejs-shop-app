@@ -1,4 +1,5 @@
 import type { Request, Response } from "express";
+import User from "@/models/user.ts";
 import Product from "@/models/product.ts";
 import Order from "@/models/order.ts";
 
@@ -23,7 +24,7 @@ export const getCheckout = async (req: Request, res: Response) => {
 
 // -- Cart Controllers
 export const getCart = async (req: Request, res: Response) => {
-	const cart = await req.user
+	const cart = await User.findOne({ _id: req.session.user._id })
 		.populate("cart.items.id")
 		.then((user) => user.cart.items);
 
@@ -50,7 +51,9 @@ export const addCartProduct = async (req: Request, res: Response) => {
 	}
 
 	try {
-		await req.user.addCartItem(productId);
+		await User.findOne({ _id: req.session.user._id }).then((user) =>
+			user.addCartItem(productId)
+		);
 
 		res.status(204).send("product added to cart");
 	} catch (err: unknown) {
@@ -63,7 +66,9 @@ export const deleteCartProduct = async (req: Request, res: Response) => {
 	const productId = req.params.id;
 
 	try {
-		await req.user.deleteCartItem(productId);
+		await User.findOne({ _id: req.session.user._id }).then((user) =>
+			user.deleteCartItem(productId)
+		);
 
 		res.redirect("/cart");
 	} catch (err: unknown) {
@@ -74,31 +79,33 @@ export const deleteCartProduct = async (req: Request, res: Response) => {
 
 // -- Order Controllers
 export const getOrder = async (req: Request, res: Response) => {
-	const orders = await Order.find({ user: req.user._id });
+	const orders = await Order.find({ user: req.session.user._id });
 
 	res.render("orders", { path: req.path, orders });
 };
 
 export const createOrder = async (req: Request, res: Response) => {
-	req.user
+	User.findOne({ _id: req.session.user._id })
 		.populate("cart.items.id")
 		.then((user) => {
-			return user.cart.items;
+			return user;
 		})
-		.then((products) => {
-			const orderItems = products.map((item: any) => ({
+		.then((user) => {
+			const orderItems = user?.cart?.items.map((item: any) => ({
 				quantity: item.quantity,
 				product: { ...item.id._doc },
 			}));
+
 			const order = new Order({
-				user: req.user._id,
+				user: req.session.user._id,
 				items: orderItems,
 			});
 
 			console.log("Creating order with items:", order);
 			order.save();
-			req.user.cart.items = [];
-			return req.user.save();
+
+			user.cart.items = [];
+			return user.save();
 		});
 
 	res.redirect("/orders");

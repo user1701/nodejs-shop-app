@@ -9,11 +9,11 @@ export const getProducts = async (req: Request, res: Response) => {
 };
 
 export const getMyProducts = async (req: Request, res: Response) => {
-	if (!req.user) {
+	if (!req.session.user) {
 		return res.status(401).send("Unauthorized: No user logged in.");
 	}
 
-	const products = await Product.find({ userId: req.user });
+	const products = await Product.find({ userId: req.session.user._id });
 	res.render("shop", {
 		products: products,
 		path: req.path,
@@ -66,7 +66,7 @@ export const postAddProduct = async (req: Request, res: Response) => {
 		return res.status(400).send("Product description is required.");
 	}
 
-	if (!req.user) {
+	if (!req.session.user) {
 		return res.status(401).send("Unauthorized: No user logged in.");
 	}
 
@@ -79,7 +79,7 @@ export const postAddProduct = async (req: Request, res: Response) => {
 		imageUrl: imageUrl || productImageUrl,
 		description,
 		price: parseFloat(price),
-		userId: req.user,
+		userId: req.session.user._id,
 	});
 
 	try {
