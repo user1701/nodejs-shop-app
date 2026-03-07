@@ -1,7 +1,14 @@
 <header class="header">
-    <nav>
+    <nav class="header-nav">
         <ul class="nav-list">
             @each(link in config.navigation)
+                <li>
+                    <a class="{{ path === link.url ? 'active' : ''}}" href="{{ path === link.url ? '#' : link.url }}">{{ link.text }}</a>
+                </li>
+            @end
+        </ul>
+        <ul class="nav-list right-nav">
+            @each(link in config.rightNavigation)
                 <li>
                     <a class="{{ path === link.url ? 'active' : ''}}" href="{{ path === link.url ? '#' : link.url }}">{{ link.text }}</a>
                 </li>

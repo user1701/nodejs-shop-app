@@ -1,11 +1,15 @@
 import express from "express";
 import type { NextFunction, Request, Response } from "express";
 import bodyParser from "body-parser";
+import cookieParser from "cookie-parser";
+import session from "express-session";
+import MongoDBStore from "connect-mongodb-session";
 
 import { renderFile } from "@/utils/edgeEngine.ts";
 
 import adminRoutes from "@/routes/admin.ts";
 import shopRoutes from "@/routes/shop.ts";
+import authRoutes from "@/routes/auth.ts";
 import { NotFoundController } from "@/controllers/common.ts";
 
 import { DEFAULT_USER_ID } from "@/constants/user.ts";
@@ -20,6 +24,25 @@ app.engine("edge", renderFile);
 app.set("view engine", "edge");
 app.set("views", "src/views");
 app.use(express.static("public"));
+
+const SessionStore = MongoDBStore(session);
+const store = new SessionStore({
+	uri: MONGO_URI,
+	databaseName: "shop",
+	collection: "sessions",
+});
+
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+app.use(cookieParser());
+app.use(
+	session({
+		secret: "your-secret-key",
+		resave: false,
+		saveUninitialized: false,
+		store,
+	})
+);
 
 app.use(async (req: Request, res: Response, next: NextFunction) => {
 	try {
@@ -36,11 +59,9 @@ app.use(async (req: Request, res: Response, next: NextFunction) => {
 	}
 });
 
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
-
 app.use(adminRoutes);
 app.use(shopRoutes);
+app.use(authRoutes);
 
 // Handle 404 errors
 app.use(NotFoundController);

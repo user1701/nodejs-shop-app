@@ -18,7 +18,12 @@ export async function mongoConnect(): Promise<MongoClient> {
 		);
 		return connection;
 	} catch (err: unknown) {
-		console.error("MongoDB connect error:", err?.message ?? err);
+		if (err instanceof Error) {
+			console.error("MongoDB connect error:", err.message);
+		} else {
+			console.error("MongoDB connect error:", err);
+		}
+
 		throw err;
 	}
 }
