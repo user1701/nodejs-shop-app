@@ -1,11 +1,9 @@
-@layout.app({ title: "Shop - Login Page" })
+@layout.app({ title: "Shop - Login Page", isAuthenticated: false })
 
     @slot('main')
-    <section>
+        <section>
             @include('partials/login-form')
-    </section>
-
-
+        </section>
     @endslot
 
 @end

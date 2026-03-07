@@ -24,8 +24,26 @@ export const login = async (req: Request, res: Response) => {
 	});
 };
 
+export const register = async (req: Request, res: Response) => {
+	const { name, email, password, confirmPassword } = req.body;
+	const existingUser = await User.findOne({ email });
+
+	if (existingUser) {
+		return res.status(400).send("Email already in use.");
+	}
+
+	if (password !== confirmPassword) {
+		return res.status(400).send("Passwords do not match.");
+	}
+
+	const user = new User({ name, email, password });
+	await user.save();
+
+	res.redirect("/login");
+};
+
 export const logout = async (req: Request, res: Response) => {
-    console.log("Logging out user:", req.session.user);
+	console.log("Logging out user:", req.session.user);
 	req.session.destroy((err) => {
 		if (err) {
 			console.error("Session destroy error:", err);
