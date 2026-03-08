@@ -1,6 +1,14 @@
 import User from "@/models/user.ts";
 import type { Request, Response } from "express";
 import bcrypt from "bcryptjs";
+import sgMail from "@sendgrid/mail";
+
+const SG_API_KEY = process.env.SENDGRID_API_KEY;
+if (SG_API_KEY === undefined) {
+	console.error("Set up you SENDGRID_API_KEY");
+} else {
+	sgMail.setApiKey(SG_API_KEY);
+}
 
 export const login = async (req: Request, res: Response) => {
 	const { email, password } = req.body;
@@ -50,6 +58,17 @@ export const register = async (req: Request, res: Response) => {
 	const user = new User({ name, email, password: hashedPassword });
 	await user.save();
 
+	await sgMail
+		.send({
+			to: email,
+			from: "ivanko1992@gmail.com",
+			subject: "Signup succeeded!",
+			html: "<h1>Test mail from local nodejs server</h1>",
+		})
+		.catch((err) => {
+			console.error("SendMail: error ", err);
+		});
+
 	res.redirect("/login");
 };
 
@@ -58,7 +77,10 @@ export const logout = async (req: Request, res: Response) => {
 	req.session.destroy((err) => {
 		if (err) {
 			console.error("Session destroy error:", err);
-            req.flash("error", "An error occurred while logging out. Please try again.");
+			req.flash(
+				"error",
+				"An error occurred while logging out. Please try again."
+			);
 			return res.status(500).redirect("/");
 		}
 		res.redirect("/");

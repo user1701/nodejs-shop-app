@@ -33,6 +33,7 @@
 		"typescript-eslint": "^8.40.0"
 	},
 	"dependencies": {
+		"@sendgrid/mail": "^8.1.6",
 		"bcryptjs": "^3.0.3",
 		"body-parser": "^2.2.2",
 		"connect-flash": "^0.1.1",
