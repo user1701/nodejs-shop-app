@@ -3,19 +3,17 @@ import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 import session from "express-session";
 import MongoStore from "connect-mongo";
+import csrf from "csurf";
+import flash from "connect-flash";
 
-import {
-	edgeInstance,
-	getRenderInstance,
-	renderFile,
-} from "@/utils/edgeEngine.ts";
+import { renderFile } from "@/utils/edgeEngine.ts";
 
 import adminRoutes from "@/routes/admin.ts";
 import shopRoutes from "@/routes/shop.ts";
 import authRoutes from "@/routes/auth.ts";
 import { NotFoundController } from "@/controllers/common.ts";
 
-import { MONGO_URI } from "./constants/db.ts";
+import { MONGO_URI } from "@/constants/db.ts";
 import mongoose from "mongoose";
 
 const PORT = process.env.PORT || 3001;
@@ -41,6 +39,14 @@ app.use(
 		}),
 	})
 );
+app.use(csrf());
+app.use(flash());
+
+app.use((req, res, next) => {
+    res.locals.isAuthenticated = req.session.isAuthenticated;
+    res.locals.csrfToken = req.csrfToken();
+    next();
+});
 
 app.use(adminRoutes);
 app.use(shopRoutes);

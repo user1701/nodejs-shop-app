@@ -1,8 +1,15 @@
-@layout.app({ title: "Shop - Login Page", isAuthenticated: false })
+@layout.app({ title: "Shop - Login Page", isAuthenticated: false, locals })
 
     @slot('main')
         <section>
+            @include('partials/error-message')
             @include('partials/login-form')
+            <div class="mt-4">
+                    <p class="text-center text-sm text-gray-500">
+                        Don't have an account yet?
+                        <a href="/register" class="font-medium text-indigo-600 hover:text-indigo-500">Create an account</a>
+                    </p>
+            </div>
         </section>
     @endslot
 

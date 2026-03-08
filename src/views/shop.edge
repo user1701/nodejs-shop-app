@@ -1,9 +1,7 @@
-@layout.app({ title: "Shop - Main Page", isAuthenticated })
+@layout.app({ title: "Shop - Main Page", isAuthenticated, locals })
 
     @slot('main')
-    <h2>Welcome to the Shop</h2>
-    <p>Here you can find a variety of products.</p>
-    <h3>Products</h3>
+    <h2 class="text-lg text-gray-700">Products</h2>
     <section class="product-container">
         @each(product in products)
             @include('partials/product-card')

@@ -1,15 +1,18 @@
 import User from "@/models/user.ts";
 import type { Request, Response } from "express";
+import bcrypt from "bcryptjs";
 
 export const login = async (req: Request, res: Response) => {
 	const { email, password } = req.body;
-	User.findOne({ email }).then((user) => {
+	User.findOne({ email }).then(async (user) => {
 		if (!user) {
-			return res.status(401).send("Invalid email");
+			req.flash("error", "Invalid email.");
+			return res.status(401).redirect("/login");
 		}
 
-		if (user.password !== password) {
-			return res.status(401).send("Invalid password.");
+		if (!(await bcrypt.compare(password, user.password))) {
+			req.flash("error", "Invalid password.");
+			return res.status(401).redirect("/login");
 		}
 
 		req.session.isAuthenticated = true;
@@ -17,7 +20,11 @@ export const login = async (req: Request, res: Response) => {
 		req.session.save((err) => {
 			if (err) {
 				console.error("Session save error:", err);
-				return res.status(500).send("Internal server error.");
+				req.flash(
+					"error",
+					"An error occurred while logging in. Please try again."
+				);
+				return res.redirect("/login");
 			}
 			res.redirect("/");
 		});
@@ -29,14 +36,18 @@ export const register = async (req: Request, res: Response) => {
 	const existingUser = await User.findOne({ email });
 
 	if (existingUser) {
-		return res.status(400).send("Email already in use.");
+		req.flash("error", "User with this email already exists.");
+		return res.status(400).redirect("/register");
 	}
 
 	if (password !== confirmPassword) {
-		return res.status(400).send("Passwords do not match.");
+		req.flash("error", "Passwords do not match.");
+		return res.status(400).redirect("/register");
 	}
 
-	const user = new User({ name, email, password });
+	const hashedPassword = await bcrypt.hash(password, 12);
+
+	const user = new User({ name, email, password: hashedPassword });
 	await user.save();
 
 	res.redirect("/login");
@@ -47,16 +58,17 @@ export const logout = async (req: Request, res: Response) => {
 	req.session.destroy((err) => {
 		if (err) {
 			console.error("Session destroy error:", err);
-			return res.status(500).send("Internal server error.");
+            req.flash("error", "An error occurred while logging out. Please try again.");
+			return res.status(500).redirect("/");
 		}
 		res.redirect("/");
 	});
 };
 
 export const loginPage = async (req: Request, res: Response) => {
-	res.render("login", { path: req.path });
+	res.render("login", { path: req.path, errorMessage: req.flash("error") });
 };
 
 export const registerPage = async (req: Request, res: Response) => {
-	res.render("register", { path: req.path });
+	res.render("register", { path: req.path, errorMessage: req.flash("error") });
 };

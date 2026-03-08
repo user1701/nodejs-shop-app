@@ -9,10 +9,11 @@
         {{{ await $slots.meta() }}}
     @endif
 
-    <link rel="stylesheet" href="/css/styles.css" />
     @if ($slots.styles)
         {{{ await $slots.styles() }}}
     @endif
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link rel="stylesheet" href="/css/styles.css" />
 </head>
 
 <body>

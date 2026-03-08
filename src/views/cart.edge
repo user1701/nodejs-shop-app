@@ -1,4 +1,4 @@
-@layout.app({ title: "Shop - Cart Page", isAuthenticated })
+@layout.app({ title: "Shop - Cart Page", isAuthenticated, locals })
 
     @slot('main')
         <h1>Cart</h1>
@@ -26,6 +26,7 @@
                 <div>${{ total }}</div>
             </div>
             <form action="/orders" method="POST">
+                <input type="hidden" name="_csrf" value="{{locals.csrfToken}}">
                 <button type="submit" class="product-card__button success">Order Now</button>
             </form>
         @end
