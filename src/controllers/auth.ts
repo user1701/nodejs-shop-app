@@ -1,7 +1,9 @@
-import User from "@/models/user.ts";
 import type { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import sgMail from "@sendgrid/mail";
+import crypto from "node:crypto";
+
+import User from "@/models/user.ts";
 
 const SG_API_KEY = process.env.SENDGRID_API_KEY;
 if (SG_API_KEY === undefined) {
@@ -87,10 +89,99 @@ export const logout = async (req: Request, res: Response) => {
 	});
 };
 
+export const resetPasword = async (req: Request, res: Response) => {
+	const { email } = req.body;
+	crypto.randomBytes(32, (err, buffer) => {
+		if (err) {
+			console.error("ResetPassword: cryptoRandomBytes - ", err);
+			res.redirect("/reset-password");
+		}
+
+		const token = buffer.toString('hex');
+		User.findOne({ email })
+			.then((user) => {
+				if (!user) {
+					req.flash("error", "User with that email not found");
+					res.redirect("/reset-password");
+				} else {
+					user.resetToken = token;
+					user.resetTokenExpiration = new Date(Date.now() + 360000);
+					return user.save();
+				}
+			})
+			.then(() => {
+				sgMail.send({
+					to: email,
+					from: "ivanko1992@gmail.com",
+					subject: "Password reset",
+					html: `
+                        <h2>You requested a password reset</h2>
+                        <p>Click this <a href="http://localhost:5001/reset-password/${token}">link</a> to set a new password</p>
+                    `,
+				});
+				res.redirect("/");
+			})
+			.catch((err) => {
+				console.error("ResetPassword: controller - ", err);
+			});
+	});
+};
+
+export const newPassword = async (req: Request, res: Response) => {
+	const { password, userId, token } = req.body;
+
+	User.findOne({
+		resetToken: token,
+		resetTokenExpiration: { $gt: Date.now() },
+		_id: userId,
+	})
+		.then(async (user) => {
+			if (user) {
+				const newPassword = await bcrypt.hash(password, 12);
+				user.password = newPassword;
+				user.resetToken = null;
+				user.resetTokenExpiration = null;
+				await user.save();
+
+				res.redirect("/login");
+			}
+		})
+		.catch((err) => {
+			console.error("newPassword: ", err);
+		});
+};
+
+export const createNewPasswordPage = async (req: Request, res: Response) => {
+	const { token } = req.params;
+
+	User.findOne({
+		resetToken: token,
+		resetTokenExpiration: { $gt: Date.now() },
+	}).then((user) => {
+		if (!user) {
+			return res.redirect("/");
+		}
+
+		res.render("create-new-password", {
+			path: req.path,
+			errorMessage: req.flash("error"),
+			userId: user?._id.toString(),
+			token,
+		});
+	});
+};
+
 export const loginPage = async (req: Request, res: Response) => {
 	res.render("login", { path: req.path, errorMessage: req.flash("error") });
 };
 
 export const registerPage = async (req: Request, res: Response) => {
 	res.render("register", { path: req.path, errorMessage: req.flash("error") });
+};
+
+export const resetPage = async (req: Request, res: Response) => {
+	res.render("reset-password", {
+		path: req.path,
+		errorMessage: req.flash("error"),
+	});
 };

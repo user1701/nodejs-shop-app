@@ -5,7 +5,7 @@ export const getProducts = async (req: Request, res: Response) => {
 	const products = await Product.find();
 	console.log("Products fetched from database:", products);
 	// console.log(`Fetched ${products.length} products.`);
-	res.render("shop", {
+	return res.render("shop", {
 		products,
 		path: req.path,
 		isAuthenticated: req.session.isAuthenticated,
@@ -18,7 +18,7 @@ export const getMyProducts = async (req: Request, res: Response) => {
 	}
 
 	const products = await Product.find({ userId: req.session.user._id });
-	res.render("shop", {
+	return res.render("shop", {
 		products: products,
 		path: req.path,
 		title: "My Products",
@@ -42,7 +42,7 @@ export const getProduct = async (req: Request, res: Response) => {
 			return res.status(404).send("Product not found.");
 		} else {
 			console.log("Product found:", product);
-			res.render("product", {
+			return res.render("product", {
 				product,
 				isAuthenticated: req.session.isAuthenticated,
 			});
@@ -54,7 +54,7 @@ export const getProduct = async (req: Request, res: Response) => {
 };
 
 export const getAddProduct = async (req: Request, res: Response) => {
-	res.render("add-product", {
+	return res.render("add-product", {
 		path: req.path,
 		isAuthenticated: req.session.isAuthenticated,
 	});
@@ -94,7 +94,7 @@ export const postAddProduct = async (req: Request, res: Response) => {
 	try {
 		await product.save();
 		console.log("Product saved successfully:", product);
-		res.redirect("/");
+		return res.redirect("/");
 	} catch (err: unknown) {
 		console.error("Error adding product:", err);
 		return res.status(500).send("Internal server error.");
@@ -109,11 +109,16 @@ export const getEditProduct = async (req: Request, res: Response) => {
 	}
 	try {
 		const product = await Product.findById(productId);
+
 		if (!product) {
 			return res.status(404).send("Product not found.");
 		}
 
-		res.render("edit-product", {
+		if (!product.userId.equals(req.session.user._id)) {
+			return res.redirect("/");
+		}
+
+		return res.render("edit-product", {
 			product: product,
 			isAuthenticated: req.session.isAuthenticated,
 		});
@@ -135,6 +140,10 @@ export const updateProduct = async (req: Request, res: Response) => {
 
 		if (!product) {
 			return res.status(404).send("Product not found.");
+		}
+
+		if (!product.userId.equals(req.session.user._id)) {
+			return res.redirect("/");
 		}
 
 		product.title = title;
@@ -160,14 +169,18 @@ export const deleteProduct = async (req: Request, res: Response) => {
 	}
 
 	try {
-		const result = await Product.deleteOne({ _id: productId });
-		console.log("Delete operation result:", result);
-
-		if (result?.deletedCount === 0) {
-			return res.status(404).send("Product not found.");
+		const product = await Product.findOne({ _id: productId });
+		if (!product) {
+			return res.status(400).send("Product not found.");
 		}
-
-		res.status(204).send();
+		if (product.userId.equals(req.session.user._id)) {
+			const deletedProduct = await Product.deleteOne({ _id: productId });
+			console.log({ deletedProduct });
+			return res.redirect("/products/my");
+		} else {
+			req.flash("error", "Product not found.");
+			return res.redirect("/products/my");
+		}
 	} catch (err: unknown) {
 		console.error("Error deleting product:", err);
 		return res.status(500).send("Internal server error.");

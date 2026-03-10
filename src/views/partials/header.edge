@@ -2,27 +2,24 @@
     <nav class="header-nav">
         <ul class="nav-list">
             @each(link in config.navigation)
-            @if(!link.isAuthenticated || link.isAuthenticated == isAuthenticated)
-            <li>
-                <a class="{{ path === link.url ? 'active' : ''}}" href="{{ path === link.url ? '#' : link.url }}">{{
-                    link.text }}</a>
-            </li>
-            @end
+                @if(!link.isAuthenticated || link.isAuthenticated == isAuthenticated)
+                <li>
+                    <a class="{{ path === link.url ? 'active' : ''}} text-lg" href="{{ path === link.url ? '#' : link.url }}">{{link.text }}</a>
+                </li>
+                @end
             @end
         </ul>
-        {{locals.csrfToken}}
         <ul class="nav-list right-nav">
             @each(link in config.rightNavigation)
-            @if(link.isAuthenticated && isAuthenticated)
-            <li>
-                <a onclick="logout()" href="#">{{ link.text }}</a>
-            </li>
-            @elseif(!link.isAuthenticated && !isAuthenticated)
-            <li>
-                <a class="{{ path === link.url ? 'active' : ''}}" href="{{ path === link.url ? '#' : link.url }}">{{
-                    link.text }}</a>
-            </li>
-            @end
+                @if(link.isAuthenticated && isAuthenticated)
+                    <li>
+                        <a class="text-lg" onclick="logout()" href="#">{{ link.text }}</a>
+                    </li>
+                @elseif(!link.isAuthenticated && !isAuthenticated)
+                    <li>
+                        <a class="{{ path === link.url ? 'active' : ''}} text-lg" href="{{ path === link.url ? '#' : link.url }}">{{link.text }}</a>
+                    </li>
+                @end
             @end
         </ul>
     </nav>

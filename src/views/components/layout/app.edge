@@ -13,6 +13,11 @@
         {{{ await $slots.styles() }}}
     @endif
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/webfonts/fa-brands-400.woff2"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/webfonts/fa-regular-400.woff2"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/webfonts/fa-solid-900.woff2"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/webfonts/fa-v4compatibility.woff2"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css"/>
     <link rel="stylesheet" href="/css/styles.css" />
 </head>
 
@@ -28,5 +33,6 @@
     @if ($slots.scripts)
         {{{ await $slots.scripts() }}}
     @endif
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/js/all.js" integrity="sha512-aK6kibiwf8qo6euZqFOsx3sZ0WmEYs3f/wtvp44qy8CdGcTah45mgbOsLi5RMvylljL0TTMu6Shr6X+g1w1lIA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 </body>
 </html>

@@ -19,11 +19,11 @@
 
     <footer class="product-card__footer">
         @if(isAuthenticated)
-        <button class="product-card__button small primary" onclick="addToCart('{{ product._id }}')">Add to Cart</button>
-        <hr />
+            <button class="product-card__button small primary" onclick="addToCart('{{ product._id }}')"><i class="fa-solid fa-basket-shopping"></i> Add to Cart</button>
+            <hr />
 
-        <button class="product-card__button small danger" onclick="deleteProduct('{{ product._id }}')">Delete</button>
-        <a class="product-card__button small" href="/products/edit/{{ product._id }}">Edit</a>
+            <button class="product-card__button small danger" onclick="deleteProduct('{{ product._id }}')"> <i class="fa-regular fa-trash-can fa-lg"></i> Delete</button>
+            <a class="product-card__button small" href="/products/edit/{{ product._id }}"><i class="fa-regular fa-pen-to-square"></i> Edit</a>
         @end
         <a class="product-card__button small" href="/products/{{ product._id }}">View Details</a>
     </footer>
