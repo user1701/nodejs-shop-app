@@ -3,8 +3,7 @@ import Product from "@/models/product.ts";
 
 export const getProducts = async (req: Request, res: Response) => {
 	const products = await Product.find();
-	console.log("Products fetched from database:", products);
-	// console.log(`Fetched ${products.length} products.`);
+	console.log(`Fetched ${products.length} products.`);
 	return res.render("shop", {
 		products,
 		path: req.path,
@@ -36,17 +35,15 @@ export const getProduct = async (req: Request, res: Response) => {
 
 	try {
 		const product = await Product.findById(productId);
-		console.log("Product fetched from database:", product);
 
 		if (!product) {
 			return res.status(404).send("Product not found.");
-		} else {
-			console.log("Product found:", product);
-			return res.render("product", {
-				product,
-				isAuthenticated: req.session.isAuthenticated,
-			});
 		}
+
+		return res.render("product", {
+			product,
+			isAuthenticated: req.session.isAuthenticated,
+		});
 	} catch (err: unknown) {
 		console.error("Error fetching product:", err);
 		res.status(500).send("Internal server error.");
@@ -174,8 +171,7 @@ export const deleteProduct = async (req: Request, res: Response) => {
 			return res.status(400).send("Product not found.");
 		}
 		if (product.userId.equals(req.session.user._id)) {
-			const deletedProduct = await Product.deleteOne({ _id: productId });
-			console.log({ deletedProduct });
+			await Product.deleteOne({ _id: productId });
 			return res.redirect("/products/my");
 		} else {
 			req.flash("error", "Product not found.");
