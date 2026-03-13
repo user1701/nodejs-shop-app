@@ -17,9 +17,14 @@ router.get("/", getShopHome);
 router.get("/products", getProducts);
 router.get("/products/:id", getProduct);
 
-router.post("/cart/:id", isAuthenticated, addCartProduct).delete("/cart/:id", isAuthenticated, deleteCartProduct);
+router
+    .post("/cart/:id", isAuthenticated, addCartProduct)
+    .delete("/cart/:id", isAuthenticated, deleteCartProduct);
+
 router.get("/cart", isAuthenticated, getCart);
 
-router.get("/orders", isAuthenticated, getOrder).post("/orders", isAuthenticated, createOrder);
+router
+    .get("/orders", isAuthenticated, getOrder)
+    .post("/orders", isAuthenticated, createOrder);
 
 export default router;

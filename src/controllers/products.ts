@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import Product from "@/models/product.ts";
+import { matchedData, validationResult } from "express-validator";
 
 export const getProducts = async (req: Request, res: Response) => {
 	const products = await Product.find();
@@ -54,26 +55,43 @@ export const getAddProduct = async (req: Request, res: Response) => {
 	return res.render("add-product", {
 		path: req.path,
 		isAuthenticated: req.session.isAuthenticated,
+		errors: {},
+		data: {
+			title: "",
+			imageUrl: "",
+			description: "",
+			price: "",
+		},
 	});
 };
 
 export const postAddProduct = async (req: Request, res: Response) => {
-	const { title = "", imageUrl, description, price } = req.body;
+	const { title = "", imageUrl = "", description, price } = req.body;
+	console.log("%s adding a new product", req.path);
 
-	if (!title) {
-		return res.status(400).send("Product title is required.");
-	}
+	const errors = validationResult(req);
+	const data = matchedData(req, {
+		includeOptionals: true,
+		onlyValidData: false,
+	});
 
-	if (!price || isNaN(parseFloat(price))) {
-		return res.status(400).send("Product price is required.");
-	}
-
-	if (!description || description.trim().length === 0) {
-		return res.status(400).send("Product description is required.");
-	}
-
-	if (!req.session.user) {
-		return res.status(401).send("Unauthorized: No user logged in.");
+	if (!errors.isEmpty()) {
+		return res.status(422).render("add-product", {
+			isAuthenticated: req.session.isAuthenticated,
+			errors: errors.mapped(),
+			data,
+		});
+		// .render("add-product", {
+		// 	path: req.path,
+		// 	isAuthenticated: req.session.isAuthenticated,
+		// 	errors: errors.mapped(),
+		// 	data: {
+		// 		title,
+		// 		imageUrl,
+		// 		description,
+		// 		price,
+		// 	},
+		// });
 	}
 
 	const image = await fetch("https://dog.ceo/api/breeds/image/random");
@@ -84,14 +102,14 @@ export const postAddProduct = async (req: Request, res: Response) => {
 		title,
 		imageUrl: imageUrl || productImageUrl,
 		description,
-		price: parseFloat(price),
+		price: price,
 		userId: req.session.user._id,
 	});
 
 	try {
 		await product.save();
 		console.log("Product saved successfully:", product);
-		return res.redirect("/");
+		return res.redirect("/products/my");
 	} catch (err: unknown) {
 		console.error("Error adding product:", err);
 		return res.status(500).send("Internal server error.");
@@ -104,6 +122,7 @@ export const getEditProduct = async (req: Request, res: Response) => {
 	if (!productId) {
 		return res.status(400).send("Product ID is required.");
 	}
+
 	try {
 		const product = await Product.findById(productId);
 
@@ -112,7 +131,7 @@ export const getEditProduct = async (req: Request, res: Response) => {
 		}
 
 		if (!product.userId.equals(req.session.user._id)) {
-			return res.redirect("/");
+			return res.redirect("/products/my");
 		}
 
 		return res.render("edit-product", {
@@ -126,21 +145,37 @@ export const getEditProduct = async (req: Request, res: Response) => {
 };
 
 export const updateProduct = async (req: Request, res: Response) => {
-	const { id, title, imageUrl, description, price } = req.body;
-	console.log(`Updating product with ID: ${id}`);
-	if (!id) {
-		return res.status(400).send("Product ID is required.");
-	}
+	const { _id, title, imageUrl, description, price } = req.body;
+	console.log(`Updating product with ID: ${req.params.id}`);
 
 	try {
-		const product = await Product.findById(id);
+		if (!_id) {
+			return res.status(400).send("Product ID is required.");
+		}
+
+		const product = await Product.findById(_id);
 
 		if (!product) {
-			return res.status(404).send("Product not found.");
+			return res.redirect("/products/my");
 		}
 
 		if (!product.userId.equals(req.session.user._id)) {
-			return res.redirect("/");
+			return res.redirect("/products/my");
+		}
+
+		const errors = validationResult(req);
+		const productData = matchedData(req, {
+			includeOptionals: true,
+			onlyValidData: false,
+		});
+        console.log(errors)
+		console.log(productData);
+		if (!errors.isEmpty()) {
+			return res.render("edit-product", {
+				product: productData,
+				errors: errors.mapped(),
+				isAuthenticated: req.session.isAuthenticated,
+			});
 		}
 
 		product.title = title;
@@ -150,7 +185,7 @@ export const updateProduct = async (req: Request, res: Response) => {
 
 		await product.save();
 
-		res.status(200).send("Product updated successfully.");
+		return res.status(200).redirect("/products/my");
 	} catch (err: unknown) {
 		console.error("Error finding product:", err);
 		return res.status(500).send("Internal server error.");

@@ -2,18 +2,33 @@ import type { Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import sgMail from "@sendgrid/mail";
 import crypto from "node:crypto";
+import { matchedData, validationResult } from "express-validator";
 
 import User from "@/models/user.ts";
 
-const SG_API_KEY = process.env.SENDGRID_API_KEY;
-if (SG_API_KEY === undefined) {
+const { SENDGRID_API_KEY } = process.env;
+if (SENDGRID_API_KEY === undefined) {
 	console.error("Set up you SENDGRID_API_KEY");
 } else {
-	sgMail.setApiKey(SG_API_KEY);
+	sgMail.setApiKey(SENDGRID_API_KEY);
 }
 
 export const login = async (req: Request, res: Response) => {
-	const { email, password } = req.body;
+	const { email = "", password = "" } = req.body;
+
+	const errors = validationResult(req);
+	const data = matchedData(req, {
+		onlyValidData: false,
+	});
+
+	if (!errors.isEmpty()) {
+		return res.render("login", {
+			path: req.path,
+			errors: errors.mapped(),
+			data,
+		});
+	}
+
 	User.findOne({ email }).then(async (user) => {
 		if (!user) {
 			req.flash("error", "Invalid email.");
@@ -42,17 +57,27 @@ export const login = async (req: Request, res: Response) => {
 };
 
 export const register = async (req: Request, res: Response) => {
-	const { name, email, password, confirmPassword } = req.body;
+	const { name, email, password } = req.body;
 	const existingUser = await User.findOne({ email });
 
-	if (existingUser) {
-		req.flash("error", "User with this email already exists.");
-		return res.status(400).redirect("/register");
+	const errors = validationResult(req);
+	const data = matchedData(req, { onlyValidData: false });
+	console.log(data);
+	if (!errors.isEmpty()) {
+		return res.render("register", {
+			success: false,
+			errors: errors.mapped(),
+			data,
+		});
 	}
 
-	if (password !== confirmPassword) {
-		req.flash("error", "Passwords do not match.");
-		return res.status(400).redirect("/register");
+	if (existingUser) {
+		return res.render("register", {
+			success: false,
+			errors: errors.mapped(),
+			errorMessage: "User with this email already exists.",
+			data,
+		});
 	}
 
 	const hashedPassword = await bcrypt.hash(password, 12);
@@ -60,6 +85,7 @@ export const register = async (req: Request, res: Response) => {
 	const user = new User({ name, email, password: hashedPassword });
 	await user.save();
 
+	res.redirect("/login");
 	await sgMail
 		.send({
 			to: email,
@@ -70,8 +96,6 @@ export const register = async (req: Request, res: Response) => {
 		.catch((err) => {
 			console.error("SendMail: error ", err);
 		});
-
-	res.redirect("/login");
 };
 
 export const logout = async (req: Request, res: Response) => {
@@ -97,7 +121,7 @@ export const resetPasword = async (req: Request, res: Response) => {
 			res.redirect("/reset-password");
 		}
 
-		const token = buffer.toString('hex');
+		const token = buffer.toString("hex");
 		User.findOne({ email })
 			.then((user) => {
 				if (!user) {
@@ -172,11 +196,30 @@ export const createNewPasswordPage = async (req: Request, res: Response) => {
 };
 
 export const loginPage = async (req: Request, res: Response) => {
-	res.render("login", { path: req.path, errorMessage: req.flash("error") });
+	const errors = validationResult(req);
+	console.log(req.body);
+	res.render("login", {
+		path: req.path,
+		errors: errors.mapped(),
+		data: {
+			email: "",
+			password: "",
+		},
+	});
 };
 
 export const registerPage = async (req: Request, res: Response) => {
-	res.render("register", { path: req.path, errorMessage: req.flash("error") });
+	const errors = validationResult(req);
+	res.render("register", {
+		path: req.path,
+		errors: errors.mapped(),
+		data: {
+			name: "",
+			email: "",
+			password: "",
+			confirmPassword: "",
+		},
+	});
 };
 
 export const resetPage = async (req: Request, res: Response) => {
