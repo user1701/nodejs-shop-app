@@ -1,4 +1,4 @@
-import type { Request, Response } from "express";
+import type { NextFunction, Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import sgMail from "@sendgrid/mail";
 import crypto from "node:crypto";
@@ -13,7 +13,11 @@ if (SENDGRID_API_KEY === undefined) {
 	sgMail.setApiKey(SENDGRID_API_KEY);
 }
 
-export const login = async (req: Request, res: Response) => {
+export const login = async (
+	req: Request,
+	res: Response,
+	next: NextFunction
+) => {
 	const { email = "", password = "" } = req.body;
 
 	const errors = validationResult(req);
@@ -29,31 +33,39 @@ export const login = async (req: Request, res: Response) => {
 		});
 	}
 
-	User.findOne({ email }).then(async (user) => {
-		if (!user) {
-			req.flash("error", "Invalid email.");
-			return res.status(401).redirect("/login");
-		}
-
-		if (!(await bcrypt.compare(password, user.password))) {
-			req.flash("error", "Invalid password.");
-			return res.status(401).redirect("/login");
-		}
-
-		req.session.isAuthenticated = true;
-		req.session.user = user;
-		req.session.save((err) => {
-			if (err) {
-				console.error("Session save error:", err);
-				req.flash(
-					"error",
-					"An error occurred while logging in. Please try again."
-				);
-				return res.redirect("/login");
+	User.findOne({ email })
+		.then(async (user) => {
+			if (!user) {
+				req.flash("error", "Invalid email.");
+				return res.status(401).redirect("/login");
 			}
-			res.redirect("/");
+
+			if (!(await bcrypt.compare(password, user.password))) {
+				req.flash("error", "Invalid password.");
+				return res.status(401).redirect("/login");
+			}
+
+			req.session.isAuthenticated = true;
+			req.session.user = user;
+			req.session.save((err) => {
+				if (err) {
+					console.error("Session save error:", err);
+					req.flash(
+						"error",
+						"An error occurred while logging in. Please try again."
+					);
+					return res.redirect("/login");
+				}
+				res.redirect("/");
+			});
+		})
+		.catch((err) => {
+			if (typeof err === "string") {
+				next(new Error(err));
+			} else if (err instanceof Error) {
+				next(err);
+			}
 		});
-	});
 };
 
 export const register = async (req: Request, res: Response) => {
@@ -94,26 +106,34 @@ export const register = async (req: Request, res: Response) => {
 			html: "<h1>Test mail from local nodejs server</h1>",
 		})
 		.catch((err) => {
-			console.error("SendMail: error ", err);
+			console.error("SendMail: error", err);
 		});
 };
 
-export const logout = async (req: Request, res: Response) => {
+export const logout = async (
+	req: Request,
+	res: Response,
+	next: NextFunction
+) => {
 	console.log("Logging out user:", req.session.user);
 	req.session.destroy((err) => {
 		if (err) {
 			console.error("Session destroy error:", err);
-			req.flash(
-				"error",
-				"An error occurred while logging out. Please try again."
-			);
-			return res.status(500).redirect("/");
+			if (typeof err === "string") {
+				next(new Error(err));
+			} else if (err instanceof Error) {
+				next(err);
+			}
 		}
 		res.redirect("/");
 	});
 };
 
-export const resetPasword = async (req: Request, res: Response) => {
+export const resetPasword = async (
+	req: Request,
+	res: Response,
+	next: NextFunction
+) => {
 	const { email } = req.body;
 	crypto.randomBytes(32, (err, buffer) => {
 		if (err) {
@@ -147,11 +167,20 @@ export const resetPasword = async (req: Request, res: Response) => {
 			})
 			.catch((err) => {
 				console.error("ResetPassword: controller - ", err);
+				if (typeof err === "string") {
+					next(new Error(err));
+				} else if (err instanceof Error) {
+					next(err);
+				}
 			});
 	});
 };
 
-export const newPassword = async (req: Request, res: Response) => {
+export const newPassword = async (
+	req: Request,
+	res: Response,
+	next: NextFunction
+) => {
 	const { password, userId, token } = req.body;
 
 	User.findOne({
@@ -172,32 +201,52 @@ export const newPassword = async (req: Request, res: Response) => {
 		})
 		.catch((err) => {
 			console.error("newPassword: ", err);
+			if (typeof err === "string") {
+				next(new Error(err));
+			} else if (err instanceof Error) {
+				next(err);
+			}
 		});
 };
 
-export const createNewPasswordPage = async (req: Request, res: Response) => {
+export const createNewPasswordPage = async (
+	req: Request,
+	res: Response,
+	next: NextFunction
+) => {
 	const { token } = req.params;
+
+	if (token === undefined) {
+		return res.redirect("/login");
+	}
 
 	User.findOne({
 		resetToken: token,
 		resetTokenExpiration: { $gt: Date.now() },
-	}).then((user) => {
-		if (!user) {
-			return res.redirect("/");
-		}
+	})
+		.then((user) => {
+			if (!user) {
+				return res.redirect("/");
+			}
 
-		res.render("create-new-password", {
-			path: req.path,
-			errorMessage: req.flash("error"),
-			userId: user?._id.toString(),
-			token,
+			res.render("create-new-password", {
+				path: req.path,
+				errorMessage: req.flash("error"),
+				userId: user?._id.toString(),
+				token,
+			});
+		})
+		.catch((err) => {
+			if (typeof err === "string") {
+				next(new Error(err));
+			} else if (err instanceof Error) {
+				next(err);
+			}
 		});
-	});
 };
 
 export const loginPage = async (req: Request, res: Response) => {
 	const errors = validationResult(req);
-	console.log(req.body);
 	res.render("login", {
 		path: req.path,
 		errors: errors.mapped(),

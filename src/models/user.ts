@@ -1,4 +1,4 @@
-import { model, Schema, Types, type InferSchemaType } from "mongoose";
+import { Document, model, Schema, Types, type InferSchemaType } from "mongoose";
 
 interface ICartItem {
 	id: Types.ObjectId;
@@ -10,12 +10,25 @@ const CartItemSchema = new Schema<ICartItem>({
 	quantity: { type: Number, required: true },
 });
 
-const UserSchema = new Schema({
+interface IUser extends Document {
+	name: string;
+	email: string;
+	password: string;
+	resetToken?: string | null;
+	resetTokenExpiration?: Date | null;
+	cart: {
+		items: ICartItem[];
+	};
+	addCartItem(id: string): void;
+	deleteCartItem(id: string): void;
+}
+
+const UserSchema = new Schema<IUser>({
 	name: { type: String, required: true },
 	email: { type: String, required: true },
 	password: { type: String, required: true },
-    resetToken: String,
-    resetTokenExpiration: Date,
+	resetToken: String,
+	resetTokenExpiration: Date,
 	cart: {
 		items: [CartItemSchema],
 	},
@@ -33,14 +46,16 @@ UserSchema.methods.addCartItem = async function (productId: string) {
 	} else {
 		this.cart.items[cartItemIndex].quantity += 1;
 	}
-	return this.save();
+
+	this.save();
 };
 
 UserSchema.methods.deleteCartItem = async function (productId: string) {
 	this.cart.items = this.cart.items.filter(
 		(item: ICartItem) => !item.id.equals(productId)
 	);
-	return this.save();
+
+	this.save();
 };
 
 const UserModel = model("User", UserSchema);

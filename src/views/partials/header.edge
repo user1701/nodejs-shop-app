@@ -4,7 +4,7 @@
             @each(link in config.navigation)
                 @if(!link.isAuthenticated || link.isAuthenticated == isAuthenticated)
                 <li>
-                    <a class="{{ path === link.url ? 'active' : ''}} text-lg" href="{{ path === link.url ? '#' : link.url }}">{{link.text }}</a>
+                    <a cl ass="{{ locals?.path === link.url ? 'active' : ''}} text-lg" href="{{ locals?.path === link.url ? '#' : link.url }}">{{link.text }}</a>
                 </li>
                 @end
             @end
@@ -17,7 +17,7 @@
                     </li>
                 @elseif(!link.isAuthenticated && !isAuthenticated)
                     <li>
-                        <a class="{{ path === link.url ? 'active' : ''}} text-lg" href="{{ path === link.url ? '#' : link.url }}">{{link.text }}</a>
+                        <a class="{{ locals?.path === link.url ? 'active' : ''}} text-lg" href="{{ locals?.path === link.url ? '#' : link.url }}">{{link.text }}</a>
                     </li>
                 @end
             @end
@@ -31,7 +31,7 @@
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "CSRF-Token": "{{locals.csrfToken}}"
+                "CSRF-Token": "{{locals?.csrfToken}}"
             },
         }).then(() => {
             window.location.href = "/";

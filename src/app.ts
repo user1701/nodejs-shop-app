@@ -1,4 +1,5 @@
 import express from "express";
+import type { NextFunction, Request, Response } from "express";
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 import session from "express-session";
@@ -11,7 +12,7 @@ import { renderFile } from "@/utils/edgeEngine.ts";
 import adminRoutes from "@/routes/admin.ts";
 import shopRoutes from "@/routes/shop.ts";
 import authRoutes from "@/routes/auth.ts";
-import { NotFoundController } from "@/controllers/common.ts";
+import { NotFoundController, ServerSideError } from "@/controllers/common.ts";
 
 import { MONGO_URI } from "@/constants/db.ts";
 import mongoose from "mongoose";
@@ -43,17 +44,23 @@ app.use(csrf());
 app.use(flash());
 
 app.use((req, res, next) => {
-    res.locals.isAuthenticated = req.session.isAuthenticated;
-    res.locals.csrfToken = req.csrfToken();
-    next();
+	res.locals.isAuthenticated = req.session.isAuthenticated;
+	res.locals.csrfToken = req.csrfToken();
+	next();
 });
 
 app.use(adminRoutes);
 app.use(shopRoutes);
 app.use(authRoutes);
 
+app.get("/server-error", ServerSideError);
 // Handle 404 errors
 app.use(NotFoundController);
+
+app.use((err: unknown, req: Request, res: Response, next: NextFunction) => {
+	console.error(err);
+	res.status(500).redirect("/server-error");
+});
 
 mongoose
 	.connect(MONGO_URI)
