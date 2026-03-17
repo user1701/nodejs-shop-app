@@ -9,12 +9,12 @@
 
     <section class="product-card__body">
         <h3 class="product-card__title">
-            <a href="/products/{{ product._id }}" class="product-card__title-link">
-                {{product.title }}
+            <a href="/products/{{ product._id }}" class="product-card__title-link inline-flex items-center gap-2">
+                <span class="hover:underline inline-block">{{ product.title }}</span><i class="fa-solid fa-link text-sm text-black-700 inline-block"></i>
             </a>
         </h3>
-        <p class="product-card__description">{{ product.description }}</p>
-        <p class="product-card__price">Price: ${{ product.price }}</p>
+        <p class="product-card__description text-md my-2">{{ product.description }}</p>
+        <p class="product-card__price text-md">Price: ${{ product.price }}</p>
     </section>
 
     <footer class="product-card__footer">

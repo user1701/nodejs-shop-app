@@ -5,6 +5,7 @@ import {
 	createOrder,
 	deleteCartProduct,
 	getCart,
+	getInvoice,
 	getOrder,
 	getShopHome,
 } from "../controllers/shop.ts";
@@ -26,5 +27,7 @@ router.get("/cart", isAuthenticated, getCart);
 router
     .get("/orders", isAuthenticated, getOrder)
     .post("/orders", isAuthenticated, createOrder);
+
+router.get("/orders/:id", isAuthenticated, getInvoice)
 
 export default router;

@@ -3,6 +3,8 @@ import User, { type IUser } from "@/models/user.ts";
 import Product, { type IProduct } from "@/models/product.ts";
 import Order from "@/models/order.ts";
 import type { Document, PopulatedDoc } from "mongoose";
+import path from "path";
+import * as fs from "node:fs";
 
 export const getShopHome = async (
 	req: Request,
@@ -43,12 +45,18 @@ export const getCheckout = async (req: Request, res: Response) => {
 
 // -- Cart Controllers
 
+function isPopulatedProduct(
+	id: PopulatedDoc<IProduct & Document>
+): id is IProduct {
+	return id != null && typeof id === "object" && "price" in id;
+}
+
 function calcTotal(
 	items: { quantity: number; id: PopulatedDoc<IProduct & Document> }[]
 ): number {
 	console.log(items);
 	return items.reduce((sum, product) => {
-		if (product.id !== null && typeof product.id === "object") {
+		if (isPopulatedProduct(product.id)) {
 			return product.id.price * product.quantity + sum;
 		} else {
 			return sum;
@@ -214,12 +222,15 @@ export const createOrder = async (
 				throw new Error("Error populating user cart items from db");
 			}
 
-			//eslint-disable-next-line @typescript-eslint/no-explicit-any
-			const orderItems = user?.cart?.items
-				.filter((item) => item.id != null)
-				.map((item: any) => ({
+			type CartItem = IUser["cart"]["items"][number];
+			const orderItems = user.cart.items
+				.filter(
+					(item): item is CartItem & { id: IProduct } =>
+						item.id != null && typeof item.id !== "string"
+				)
+				.map((item) => ({
 					quantity: item.quantity,
-					product: { ...item.id._doc },
+					product: item.id.toObject(),
 				}));
 
 			const order = new Order({
@@ -242,4 +253,25 @@ export const createOrder = async (
 		});
 
 	res.redirect("/orders");
+};
+
+export const getInvoice = (req: Request, res: Response, next: NextFunction) => {
+	const { id } = req.params;
+    const invoiceName = `invoice-${id}.pdf`;
+	try {
+        const invoicePath = path.join(__dirname, "..", "data", "invoices", invoiceName);
+        fs.readFile(invoicePath, (err, data) => {
+            if (err) {
+                throw new Error("Invoice not found");
+            }
+            res.setHeader("Content-Type", "application/pdf");
+            res.send(data);
+        });
+	} catch (err) {
+		if (typeof err === "string") {
+			next(new Error(err));
+		} else if (err instanceof Error) {
+			next(err);
+		}
+	}
 };

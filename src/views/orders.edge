@@ -1,52 +1,35 @@
 @layout.app({ title: "Shop - Cart Page", isAuthenticated, locals })
 
-@slot('main')
-<h1>Order</h1>
+    @slot('main')
+    <h1 class="text-2xl font-bold">Orders</h1>
 
-<div class="cart__wrapper">
-    @each(order in orders)
-    <div class="cart__product">
-        <div>
-            <h4 class="">{{ order._id }}</h4>
-            <div>
-                <strong>Products:</strong>
-                @each(product in order.items)
-                    <div>{{ product.product.title }} x {{ product.quantity }} - <b>{{ product.product.price }}$</b></div>
-                @end
+    <div class="cart__wrapper">
+        @each(order in orders)
+            <div class="flex flex-col justify-between items-start gap-2 mb-4 border-b border-black-700 pb-4">
+                <div>
+                    <h4 class="mb-0!">
+                        <a class="text-black-700 font-bold text-decoration-underline text-xl py-2 inline-block" href="/orders/{{ order._id }}"
+                            target="_blank" download="invoice-{{ order._id }}.pdf">{{ order._id }}</a>
+                    </h4>
+                    <div>
+                        <strong>Products:</strong>
+                        @each(product in order.items)
+                            <div class="flex flex-row justify-between items-center">
+                                <div>{{ product.product.title }} x{{ product.quantity }}</div>
+                                <div class="flex-1 border-b border-black-700 border-dashed align-baseline -mt-3 mr-[2px]">&nbsp;</div>
+                                <div class="text-right"><b>{{ product.product.price }}$</b></div>
+                            </div>
+                        @end
+                    </div>
+                </div>
+                <div>
+                    <a class="text-blue-500 text-decoration-underline text-md" href="/orders/{{ order._id }}" target="_blank"
+                        download="invoice-{{ order._id }}.pdf">Download Invoice <i class="fa-solid fa-file-pdf"></i></a>
+                </div>
             </div>
-        </div>
+        @else
+            <h4 class="text-lg font-bold">No orders yet</h4>
+        @end
     </div>
-    @else
-    <h4>No orders yet</h4>
-    @end
-</div>
-@if(total > 0)
-<hr />
-<div class="cart__total">
-    <div>Total Price:</div>
-    <div>${{ total }}</div>
-</div>
-<form action="/orders" method="POST">
-    <button type="submit" class="product-card__button success">Order Now</button>
-</form>
-@end
-@endslot
-@end
-
-@pushOnceTo('scripts')
-<script>
-    async function removeProduct(cartItemId) {
-        console.log('Deleting cart item with id: ', cartItemId);
-
-        try {
-            const response = await fetch(`/cart/${cartItemId}`, {
-                method: "Delete"
-            });
-
-            location.reload()
-        } catch (err) {
-            console.error('Error: deleting product from cart, ', err)
-        }
-    }
-</script>
+    @endslot
 @end
