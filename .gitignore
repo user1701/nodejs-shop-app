@@ -32,3 +32,4 @@ coverage/
 # Other temporary files
 tmp/
 public/uploads
+data
