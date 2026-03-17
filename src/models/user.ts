@@ -45,15 +45,20 @@ const UserSchema = new Schema<IUser>({
 export type UserType = InferSchemaType<typeof UserSchema>;
 
 UserSchema.methods.addCartItem = async function (productId: string) {
-	const cartItemIndex = this.cart.items.findIndex((item: ICartItem) => {
-		if (typeof item?.id === "string") {
-			return item.id === productId;
-		} else if (item.id instanceof Document) {
-			return item.id._id.equals(productId);
-		}
-	});
+	const len = this.cart.items.length;
+	const cartItemIndex =
+		len === 0
+			? 0
+			: this.cart.items.findIndex((item: ICartItem) => {
+					if (typeof item?.id === "string") {
+						return item.id === productId;
+					} else if (typeof item.id === 'object') {
+						return item.id._id.equals(productId);
+					}
+				});
 
-	if (cartItemIndex < 0) {
+
+	if (cartItemIndex < 0 || len === 0) {
 		this.cart.items.push({ id: productId, quantity: 1 });
 	} else {
 		this.cart.items[cartItemIndex].quantity += 1;
