@@ -1,6 +1,15 @@
-import { model, Schema } from "mongoose";
+import { model, Schema, Document, type PopulatedDoc } from "mongoose";
+import type { IUser } from "./user.ts";
 
-const ProductSchema = new Schema({
+export interface IProduct extends Document {
+	title: string;
+	imageUrl: string;
+	description: string;
+	price: number;
+	userId: PopulatedDoc<IUser & Document>;
+}
+
+const ProductSchema = new Schema<IProduct>({
 	title: { type: String, required: true },
 	imageUrl: { type: String, required: true },
 	description: { type: String, required: true },

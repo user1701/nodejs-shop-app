@@ -1,7 +1,15 @@
-import { Document, model, Schema, Types, type InferSchemaType } from "mongoose";
+import {
+	Document,
+	model,
+	Schema,
+	Types,
+	type InferSchemaType,
+	type PopulatedDoc,
+} from "mongoose";
+import type { IProduct } from "./product.ts";
 
 interface ICartItem {
-	id: Types.ObjectId;
+	id: PopulatedDoc<IProduct & Document>;
 	quantity: number;
 }
 
@@ -10,7 +18,7 @@ const CartItemSchema = new Schema<ICartItem>({
 	quantity: { type: Number, required: true },
 });
 
-interface IUser extends Document {
+export interface IUser extends Document {
 	name: string;
 	email: string;
 	password: string;
@@ -37,9 +45,13 @@ const UserSchema = new Schema<IUser>({
 export type UserType = InferSchemaType<typeof UserSchema>;
 
 UserSchema.methods.addCartItem = async function (productId: string) {
-	const cartItemIndex = this.cart.items.findIndex((item: ICartItem) =>
-		item.id.equals(productId)
-	);
+	const cartItemIndex = this.cart.items.findIndex((item: ICartItem) => {
+		if (typeof item?.id === "string") {
+			return item.id === productId;
+		} else if (item.id instanceof Document) {
+			return item.id._id.equals(productId);
+		}
+	});
 
 	if (cartItemIndex < 0) {
 		this.cart.items.push({ id: productId, quantity: 1 });
@@ -51,13 +63,17 @@ UserSchema.methods.addCartItem = async function (productId: string) {
 };
 
 UserSchema.methods.deleteCartItem = async function (productId: string) {
-	this.cart.items = this.cart.items.filter(
-		(item: ICartItem) => !item.id.equals(productId)
-	);
+	this.cart.items = this.cart.items.filter((item: ICartItem) => {
+		if (typeof item.id === "string") {
+			return item.id !== productId;
+		} else {
+			return !item.id?._id.equals(productId);
+		}
+	});
 
 	this.save();
 };
 
-const UserModel = model("User", UserSchema);
+const UserModel = model<IUser>("User", UserSchema);
 
 export default UserModel;

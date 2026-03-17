@@ -1,4 +1,4 @@
-<form action="{{`/products/edit/${product._id}`}}" method="POST">
+<form action="{{`/products/edit/${product._id}`}}" method="POST" enctype="multipart/form-data">
     <input type="hidden" name="_csrf" value="{{locals.csrfToken}}">
     <input type="hidden" name="_id" value={{product._id}} />
     <div class="input-group">
@@ -9,10 +9,10 @@
         @end
     </div>
     <div class="input-group">
-        <label class="text-sm text-gray-700" for="imageUrl">Product Image URL:</label>
-        <input type="text" id="imageUrl" name="imageUrl" {{ html.attrs({ value: product.imageUrl }) }} />
-        @if(errors?.imageUrl)
-            <p class="text-red-700 px-4 pt-1 relative" role="alert">{{errors.imageUrl.msg}}</p>
+        <label class="text-sm text-gray-700" for="image">Product Image:</label>
+        <input type="file" id="image" name="image" {{-- html.attrs({ value: product.imageUrl }) --}} accept="image/*"/>
+        @if(errors?.image)
+            <p class="text-red-700 px-4 pt-1 relative" role="alert">{{errors.image.msg}}</p>
         @end
     </div>
     <div class="input-group">

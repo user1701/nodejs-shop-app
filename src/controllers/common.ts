@@ -7,5 +7,7 @@ export const NotFoundController = async (req: Request, res: Response) => {
 };
 
 export const ServerSideError = async (req: Request, res: Response) => {
-	res.render("server-side-error");
+	res.render("server-side-error", {
+		isAuthenticated: req.session.isAuthenticated,
+	});
 };

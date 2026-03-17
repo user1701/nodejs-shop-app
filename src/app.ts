@@ -6,6 +6,7 @@ import session from "express-session";
 import MongoStore from "connect-mongo";
 import csrf from "csurf";
 import flash from "connect-flash";
+import multer, { type FileFilterCallback } from "multer";
 
 import { renderFile } from "@/utils/edgeEngine.ts";
 
@@ -19,6 +20,36 @@ import mongoose from "mongoose";
 
 const PORT = process.env.PORT || 3001;
 
+const storage = multer.diskStorage({
+	destination: (
+		req: Request,
+		file: Express.Multer.File,
+		cb: (error: Error | null, destination: string) => void
+	) => {
+		cb(null, "public/uploads");
+	},
+	filename: (
+		req: Request,
+		file: Express.Multer.File,
+		cb: (error: Error | null, filename: string) => void
+	) => {
+        console.log(file)
+		cb(null, `${Date.now()}-${file.originalname.replaceAll(" ", "_")}`);
+	},
+});
+
+const fileFilter = (
+	req: Request,
+	file: Express.Multer.File,
+	cb: FileFilterCallback
+) => {
+	if (["image/png", "image/jpg", "image/jpeg"].includes(file.mimetype)) {
+		cb(null, true);
+	} else {
+		cb(null, false);
+	}
+};
+
 const app = express();
 app.engine("edge", renderFile);
 app.set("view engine", "edge");
@@ -26,6 +57,7 @@ app.set("views", "src/views");
 app.use(express.static("public"));
 
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use(multer({ storage, fileFilter }).single("image"));
 app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(

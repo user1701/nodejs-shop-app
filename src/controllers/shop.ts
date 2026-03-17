@@ -1,7 +1,8 @@
 import type { NextFunction, Request, Response } from "express";
-import User from "@/models/user.ts";
-import Product from "@/models/product.ts";
+import User, { type IUser } from "@/models/user.ts";
+import Product, { type IProduct } from "@/models/product.ts";
 import Order from "@/models/order.ts";
+import type { Document, PopulatedDoc } from "mongoose";
 
 export const getShopHome = async (
 	req: Request,
@@ -41,6 +42,20 @@ export const getCheckout = async (req: Request, res: Response) => {
 };
 
 // -- Cart Controllers
+
+function calcTotal(
+	items: { quantity: number; id: PopulatedDoc<IProduct & Document> }[]
+): number {
+	console.log(items);
+	return items.reduce((sum, product) => {
+		if (product.id !== null && typeof product.id === "object") {
+			return product.id.price * product.quantity + sum;
+		} else {
+			return sum;
+		}
+	}, 0);
+}
+
 export const getCart = async (
 	req: Request,
 	res: Response,
@@ -48,7 +63,24 @@ export const getCart = async (
 ) => {
 	const cart = await User.findOne({ _id: req.session.user._id })
 		.populate("cart.items.id")
-		.then((user) => user.cart.items)
+		.orFail()
+		.then((user: IUser) => {
+			if (user) {
+				return user.cart.items.filter((item) => item.id !== null);
+			} else {
+				throw new Error("User not found");
+			}
+		})
+		.then((items) => {
+			const total = calcTotal(items);
+
+			res.render("cart", {
+				cart: items,
+				total: total.toFixed(2),
+				path: req.path,
+				isAuthenticated: req.session.isAuthenticated,
+			});
+		})
 		.catch((err) => {
 			if (typeof err === "string") {
 				next(new Error(err));
@@ -60,21 +92,20 @@ export const getCart = async (
 	console.log("Cart fetched:", cart);
 
 	try {
-		if (Array.isArray(cart)) {
-			const total = cart.reduce(
-				(sum, product) => product.id.price * product.quantity + sum,
-				0
-			);
-
-			res.render("cart", {
-				cart,
-				total: total.toFixed(2),
-				path: req.path,
-				isAuthenticated: req.session.isAuthenticated,
-			});
-		} else {
-			throw new Error("Error cart fetching");
-		}
+		// if (Array.isArray(cart)) {
+		// 	const total = cart.reduce(
+		// 		(sum, product) => product.id.price * product.quantity + sum,
+		// 		0
+		// 	);
+		// 	res.render("cart", {
+		// 		cart,
+		// 		total: total.toFixed(2),
+		// 		path: req.path,
+		// 		isAuthenticated: req.session.isAuthenticated,
+		// 	});
+		// } else {
+		// 	throw new Error("Error cart fetching");
+		// }
 	} catch (err) {
 		console.error("Error fetching products:", err);
 		if (typeof err === "string") {
@@ -98,9 +129,13 @@ export const addCartProduct = async (
 	}
 
 	try {
-		await User.findOne({ _id: req.session.user._id }).then((user) =>
-			user.addCartItem(productId)
-		);
+		await User.findOne({ _id: req.session.user._id }).then((user) => {
+			if (user) {
+				user.addCartItem(productId);
+			} else {
+				throw new Error("User not found");
+			}
+		});
 
 		res.status(204).send("product added to cart");
 	} catch (err: unknown) {
@@ -179,10 +214,13 @@ export const createOrder = async (
 				throw new Error("Error populating user cart items from db");
 			}
 
-			const orderItems = user?.cart?.items.map((item: any) => ({
-				quantity: item.quantity,
-				product: { ...item.id._doc },
-			}));
+			//eslint-disable-next-line @typescript-eslint/no-explicit-any
+			const orderItems = user?.cart?.items
+				.filter((item) => item.id != null)
+				.map((item: any) => ({
+					quantity: item.quantity,
+					product: { ...item.id._doc },
+				}));
 
 			const order = new Order({
 				user: req.session.user._id,

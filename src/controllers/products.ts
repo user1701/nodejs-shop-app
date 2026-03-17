@@ -2,6 +2,7 @@ import type { NextFunction, Request, Response } from "express";
 import Product from "@/models/product.ts";
 import { matchedData, validationResult } from "express-validator";
 import mongoose from "mongoose";
+import { getUploadedFilePath } from "@/utils/getUploadedFilePath.ts";
 
 export const getProducts = async (
 	req: Request,
@@ -107,16 +108,19 @@ export const postAddProduct = async (
 	res: Response,
 	next: NextFunction
 ) => {
-	const { title = "", imageUrl = "", description, price } = req.body;
+	const { title = "", description, price } = req.body;
 	console.log("%s adding a new product", req.path);
+	const image = req.file;
 
 	const errors = validationResult(req);
 	const data = matchedData(req, {
 		includeOptionals: true,
 		onlyValidData: false,
 	});
+	console.log(errors);
+	console.log(data);
 
-	if (!errors.isEmpty()) {
+	if (!errors.isEmpty() || !image) {
 		return res.status(422).render("add-product", {
 			isAuthenticated: req.session.isAuthenticated,
 			errors: errors.mapped(),
@@ -124,13 +128,13 @@ export const postAddProduct = async (
 		});
 	}
 
-	const image = await fetch("https://dog.ceo/api/breeds/image/random");
-	const imageData = (await image.json()) as { message: string };
-	const productImageUrl = imageData.message;
+	// const image = await fetch("https://dog.ceo/api/breeds/image/random");
+	// const imageData = (await image.json()) as { message: string };
+	// const productImageUrl = imageData.message;
 
 	const product = new Product({
 		title,
-		imageUrl: imageUrl || productImageUrl,
+		imageUrl: getUploadedFilePath(image),
 		description,
 		price: price,
 		userId: req.session.user._id,
@@ -168,12 +172,12 @@ export const getEditProduct = async (
 
 	try {
 		const product = await Product.findById(productId);
-
+		console.log(product);
 		if (!product) {
 			return res.status(404).send("Product not found.");
 		}
 
-		if (!product.userId.equals(req.session.user._id)) {
+		if (product.userId && !product.userId.equals(req.session.user._id)) {
 			return res.redirect("/products/my");
 		}
 
@@ -196,12 +200,17 @@ export const updateProduct = async (
 	res: Response,
 	next: NextFunction
 ) => {
-	const { _id, title, imageUrl, description, price } = req.body;
+	const { _id, title, description, price } = req.body;
 	console.log(`Updating product with ID: ${req.params.id}`);
+	const image = req.file;
 
 	try {
 		if (!_id) {
 			throw new Error("Product ID is required.");
+		}
+
+		if (!mongoose.isValidObjectId(_id)) {
+			return res.redirect("/products/my");
 		}
 
 		const product = await Product.findById(_id);
@@ -210,7 +219,7 @@ export const updateProduct = async (
 			throw new Error(`Product with an ID: ${_id} not found!`);
 		}
 
-		if (!product.userId.equals(req.session.user._id)) {
+		if (product.userId && !product.userId.equals(req.session.user._id)) {
 			throw new Error(`Product belongs to another user id: ${product.userId}`);
 		}
 
@@ -229,7 +238,10 @@ export const updateProduct = async (
 		}
 
 		product.title = title;
-		product.imageUrl = imageUrl;
+		if (image) {
+			console.log(image);
+			product.imageUrl = getUploadedFilePath(image);
+		}
 		product.description = description;
 		product.price = price;
 
@@ -254,20 +266,24 @@ export const deleteProduct = async (
 	const productId = req.params.id;
 	console.log(`Deleting product with ID: ${productId}`);
 
-	if (!productId) {
-		throw new Error("Product ID is required.");
-	}
-
 	try {
+		if (!productId) {
+			throw new Error("Product ID is required.");
+		}
+
+		if (!mongoose.isValidObjectId(productId)) {
+			throw new Error("Invalid product id");
+		}
+
 		const product = await Product.findOne({ _id: productId });
 
 		if (!product) {
 			throw new Error(`Product with an id: ${productId} not found.`);
 		}
 
-		if (product.userId.equals(req.session.user._id)) {
+		if (product.userId && product.userId.equals(req.session.user._id)) {
 			await Product.deleteOne({ _id: productId });
-			return res.redirect("/products/my");
+			return res.redirect("/");
 		} else {
 			throw new Error("Product belongs to another user!");
 		}

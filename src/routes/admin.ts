@@ -18,11 +18,11 @@ const productBodyValidation = () => [
 		.withMessage(
 			"Please enter a title that’s at least 3 characters long and no more than 40."
 		),
-	body("imageUrl")
-		.trim()
-		.optional({ checkFalsy: true })
-		.isURL()
-		.withMessage("Please enter a valid web address (URL)."),
+	// body("imageUrl")
+	// 	.trim()
+	// 	.optional({ checkFalsy: true })
+	// 	.isURL()
+	// 	.withMessage("Please enter a valid web address (URL)."),
 	body("price", "Price is required!").toFloat().isFloat(),
 	body("description", "Description is required!")
 		.isLength({ min: 5, max: 255 })
