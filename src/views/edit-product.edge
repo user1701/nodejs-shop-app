@@ -1,11 +1,8 @@
-@layout.app({ title: "Shop - Home Page" })
+@layout.app({ title: "Shop - Home Page", isAuthenticated, locals })
 
     @slot('main')
-        <h1>Welcome to the Add Product Page</h1>
-        <p style="text-align: center; font-size: 1.2em; margin: 0 0 1.5em">
-            Please fill out the form below to add a new product.
-        </p>
-        @include('partials/product-form')
+        <h2 class="text-left text-lg max-w-[400px] mx-auto mt-6 mb-2!">Edit: {{ product.title }}</h2>
+        @include('partials/edit-product-form')
     @endslot
 
 @end

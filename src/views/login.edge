@@ -1,0 +1,21 @@
+@layout.app({ title: "Shop - Login Page", isAuthenticated: false, locals, errors, data })
+
+    @slot('main')
+        <section>
+            @include('partials/error-message')
+            @include('partials/login-form')
+            <div class="mt-4">
+                    <p class="text-center text-sm text-gray-500 my-1">
+                        Don't have an account yet?
+                        <a href="/register" class="font-medium text-indigo-600 hover:text-indigo-500">Create an account</a>
+                    </p>
+
+                    <p class="text-center text-sm text-gray-500 mb-1">
+                        Forgot password?
+                        <a href="/reset-password" class="font-medium text-indigo-600 hover:text-indigo-500">Reset password</a>
+                    </p>
+            </div>
+        </section>
+    @endslot
+
+@end

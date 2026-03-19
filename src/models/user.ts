@@ -1,138 +1,84 @@
-import sequelize from "../utils/db.ts";
 import {
-	Association,
-	DataTypes,
-	Model,
-	type BelongsToCreateAssociationMixin,
-	type BelongsToGetAssociationMixin,
-	type BelongsToSetAssociationMixin,
-	type CreationOptional,
-	type HasManyAddAssociationMixin,
-	type HasManyAddAssociationsMixin,
-	type HasManyCountAssociationsMixin,
-	type HasManyCreateAssociationMixin,
-	type HasManyGetAssociationsMixin,
-	type HasManyHasAssociationMixin,
-	type HasManyHasAssociationsMixin,
-	type HasManyRemoveAssociationMixin,
-	type HasManyRemoveAssociationsMixin,
-	type HasManySetAssociationsMixin,
-	type InferAttributes,
-	type InferCreationAttributes,
-	type NonAttribute,
-} from "sequelize";
-import Product from "./product.ts";
-import type Cart from "./cart.ts";
-import type Order from "./order.ts";
+	Document,
+	model,
+	Schema,
+	Types,
+	type InferSchemaType,
+	type PopulatedDoc,
+} from "mongoose";
+import type { IProduct } from "./product.ts";
 
-class User extends Model<
-	InferAttributes<User, { omit: "products" | "cart" }>,
-	InferCreationAttributes<User, { omit: "products" | "cart" }>
-> {
-	declare id: CreationOptional<string>;
-	declare name: string;
-	declare email: string;
-	declare password: string;
-
-	// timestamps!
-	// createdAt can be undefined during creation
-	// updatedAt can be undefined during creation
-	declare createdAt: CreationOptional<Date>;
-	declare updatedAt: CreationOptional<Date>;
-	declare deletedAt: CreationOptional<Date>;
-
-	// Since TS cannot determine model association at compile time
-	// we have to declare them here purely virtually
-	// these will not exist until `Model.init` was called.
-	// https://sequelize.org/docs/v6/core-concepts/assocs/#special-methodsmixins-added-to-instances
-
-	// Product mixins
-	declare products?: NonAttribute<Product[]>;
-	declare getProducts: HasManyGetAssociationsMixin<Product>;
-	declare addProduct: HasManyAddAssociationMixin<Product, string>;
-	declare addProducts: HasManyAddAssociationsMixin<Product, string>;
-	declare setProducts: HasManySetAssociationsMixin<Product, string>;
-	declare removeProduct: HasManyRemoveAssociationMixin<Product, string>;
-	declare removeProducts: HasManyRemoveAssociationsMixin<Product, string>;
-	declare hasProduct: HasManyHasAssociationMixin<Product, string>;
-	declare hasProducts: HasManyHasAssociationsMixin<Product, string>;
-	declare countProducts: HasManyCountAssociationsMixin;
-	declare createProduct: HasManyCreateAssociationMixin<Product, "userId">;
-
-	// Possible inclusions from other associations
-	declare cart?: NonAttribute<Cart>;
-	declare getCart: BelongsToGetAssociationMixin<Cart>;
-	declare setCart: BelongsToSetAssociationMixin<Cart, string>;
-	declare createCart: BelongsToCreateAssociationMixin<Cart>;
-
-    declare orders?: NonAttribute<Order[]>;
-    declare getOrders: HasManyGetAssociationsMixin<Order>;
-    declare createOrder: HasManyCreateAssociationMixin<Order, "userId">;
-
-	declare static associations: {
-		products: Association<User, Product>;
-		cart: Association<User, Cart>;
-		orders: Association<User, Order>;
-	};
+interface ICartItem {
+	id: PopulatedDoc<IProduct & Document>;
+	quantity: number;
 }
 
-User.init(
-	{
-		id: {
-			type: DataTypes.UUID,
-			primaryKey: true,
-			allowNull: false,
-			defaultValue: DataTypes.UUIDV4,
-			unique: true,
-		},
-		name: {
-			type: DataTypes.STRING,
-			allowNull: false,
-		},
-		email: {
-			type: DataTypes.STRING,
-			allowNull: false,
-			unique: true,
-			validate: {
-				isEmail: true,
-			},
-		},
-		password: {
-			type: DataTypes.STRING,
-			allowNull: false,
-		},
-		createdAt: DataTypes.DATE,
-		updatedAt: DataTypes.DATE,
-		deletedAt: DataTypes.DATE,
-	},
-	{
-		tableName: "users",
-		timestamps: true,
-		paranoid: true,
-		sequelize,
-	}
-);
+const CartItemSchema = new Schema<ICartItem>({
+	id: { type: Types.ObjectId, ref: "Product", required: true },
+	quantity: { type: Number, required: true },
+});
 
-export async function createDefaultUser(userId: string, log: boolean = false) {
-	const [user, created] = await User.findOrCreate({
-		where: { id: userId },
-		defaults: {
-			id: userId,
-			email: "ivan@gmail.com",
-			name: "Ivan",
-			password: "test123",
-		},
+export interface IUser extends Document {
+	name: string;
+	email: string;
+	password: string;
+	resetToken?: string | null;
+	resetTokenExpiration?: Date | null;
+	cart: {
+		items: ICartItem[];
+	};
+	addCartItem(id: string): void;
+	deleteCartItem(id: string): void;
+}
+
+const UserSchema = new Schema<IUser>({
+	name: { type: String, required: true },
+	email: { type: String, required: true },
+	password: { type: String, required: true },
+	resetToken: String,
+	resetTokenExpiration: Date,
+	cart: {
+		items: [CartItemSchema],
+	},
+});
+
+export type UserType = InferSchemaType<typeof UserSchema>;
+
+UserSchema.methods.addCartItem = async function (productId: string) {
+	const len = this.cart.items.length;
+	const cartItemIndex =
+		len === 0
+			? 0
+			: this.cart.items.findIndex((item: ICartItem) => {
+					if (typeof item?.id === "string") {
+						return item.id === productId;
+					} else if (typeof item.id === 'object') {
+						return item.id._id.equals(productId);
+					}
+				});
+
+
+	if (cartItemIndex < 0 || len === 0) {
+		this.cart.items.push({ id: productId, quantity: 1 });
+	} else {
+		this.cart.items[cartItemIndex].quantity += 1;
+	}
+
+	this.save();
+};
+
+UserSchema.methods.deleteCartItem = async function (productId: string) {
+	this.cart.items = this.cart.items.filter((item: ICartItem) => {
+		if (typeof item.id === "string") {
+			return item.id !== productId;
+		} else {
+			return !item.id?._id.equals(productId);
+		}
 	});
 
-	if (log) {
-		if (created) {
-			console.log("Default user created:", user.toJSON());
-		} else {
-			console.log("Default user already exists:", user.toJSON());
-		}
-	}
+	this.save();
+};
 
-	return user;
-}
+const UserModel = model<IUser>("User", UserSchema);
 
-export default User;
+export default UserModel;

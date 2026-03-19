@@ -1,4 +1,4 @@
-@layout.app({ title: "Shop - Cart Page" })
+@layout.app({ title: "Shop - Cart Page", isAuthenticated, locals })
 
     @slot('main')
         <h1>Cart</h1>
@@ -7,12 +7,12 @@
             @each(product in cart)
                 <div class="cart__product">
                     <div class="cart__product-data">
-                        <h4 class="cart__product-title">{{ product.title }}</h4>
-                        <div class="cart__product-qty"><b>quantity: </b>{{ product.CartItem.quantity }}</div>
-                        <div class="cart__product-price">${{ product.price }}</div>
+                        <h4 class="cart__product-title">{{ product.id.title }}</h4>
+                        <div class="cart__product-qty"><b>quantity: </b>{{ product.quantity }}</div>
+                        <div class="cart__product-price">${{ product.id.price }}</div>
                     </div>
                     <div class="cart__product-actions">
-                        <button type="button" class="product-card__button danger" onclick="removeProduct('{{product.id}}')">Delete</button>
+                        <button type="button" class="product-card__button danger" onclick="removeProduct('{{product.id._id}}')"><i class="fa-regular fa-trash-can fa-lg"></i></button>
                     </div>
                 </div>
             @else
@@ -26,6 +26,7 @@
                 <div>${{ total }}</div>
             </div>
             <form action="/orders" method="POST">
+                <input type="hidden" name="_csrf" value="{{locals.csrfToken}}">
                 <button type="submit" class="product-card__button success">Order Now</button>
             </form>
         @end
@@ -39,7 +40,10 @@
 
         try {
             const response = await fetch(`/cart/${cartItemId}`, {
-                method: "Delete"
+                method: "Delete",
+                headers: {
+                   'CSRF-Token': '{{locals.csrfToken}}'
+                }
             });
 
             location.reload()

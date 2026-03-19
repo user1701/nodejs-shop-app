@@ -9,21 +9,23 @@
 
     <section class="product-card__body">
         <h3 class="product-card__title">
-            <a href="/products/{{ product.id }}" class="product-card__title-link">
-                {{product.title }}
+            <a href="/products/{{ product._id }}" class="product-card__title-link inline-flex items-center gap-2 line-clamp-1 relative pr-[25px]!">
+                <span class="hover:underline line-clamp-1">{{ product.title }}</span> <i class="fa-solid fa-link text-sm text-black-700 absolute right-[6px] top-[6px]"></i>
             </a>
         </h3>
-        <p class="product-card__description">{{ product.description }}</p>
-        <p class="product-card__price">Price: ${{ product.price }}</p>
+        <p class="product-card__description text-md my-2">{{ product.description }}</p>
+        <p class="product-card__price text-md">Price: ${{ product.price }}</p>
     </section>
 
     <footer class="product-card__footer">
-        <button class="product-card__button small primary" onclick="addToCart('{{ product.id }}')">Add to Cart</button>
-        <hr />
+        @if(isAuthenticated)
+            <button class="product-card__button small primary" onclick="addToCart('{{ product._id }}')"><i class="fa-solid fa-basket-shopping"></i> Add to Cart</button>
+            <hr />
 
-        <button class="product-card__button small danger" onclick="deleteProduct('{{ product.id }}')">Delete</button>
-        <a class="product-card__button small" href="/products/edit/{{ product.id }}">Edit</a>
-        <a class="product-card__button small" href="/products/{{ product.id }}">View Details</a>
+            <button class="product-card__button small danger" onclick="deleteProduct('{{ product._id }}')"> <i class="fa-regular fa-trash-can fa-lg"></i> Delete</button>
+            <a class="product-card__button small" href="/products/edit/{{ product._id }}"><i class="fa-regular fa-pen-to-square"></i> Edit</a>
+        @end
+        <a class="product-card__button small" href="/products/{{ product._id }}">View Details</a>
     </footer>
 </div>
 
@@ -36,7 +38,11 @@
         try {
             const response = await fetch(`/cart/${productId}`, {
                 method: 'POST',
-                redirect: "follow"
+                redirect: "follow",
+                headers: {
+                    'Content-Type': 'application/json',
+                    'CSRF-Token': '{{locals.csrfToken}}'
+                },
             });
 
             if (response.redirected) {
@@ -55,8 +61,12 @@
         try {
             const response = await fetch(`/products/${productId}`, {
                 method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'CSRF-Token': '{{locals.csrfToken}}'
+                },
             });
-            //console.log(response);
+            console.log(response);
             location.reload(); // Reload the page to reflect changes
         } catch (error) {
             console.error('Error deleting product:', error);

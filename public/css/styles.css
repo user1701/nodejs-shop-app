@@ -14,13 +14,25 @@ body {
 	position: sticky;
 	z-index: 10;
 }
+.header-nav {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0 auto;
+}
 
 .nav-list {
 	list-style: none;
 	padding: 0;
 	margin: 0;
 	display: flex;
-	justify-content: center;
+	justify-content: flex-start;
+
+    .right-nav {
+        margin-left: auto;
+        justify-content: flex-end;
+    }
 
 	a {
 		text-decoration: none;
@@ -93,6 +105,8 @@ form {
 		padding: 0.5em 1em;
 		font-size: 1em;
 		font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        border-width: 1px;
+        border-radius: 3px;
 	}
 
 	label {
@@ -162,7 +176,6 @@ form {
 	}
 
 	.product-card__title-link {
-		all: unset;
 		display: block;
 		cursor: pointer;
 	}

@@ -1,13 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import path from "path";
 import { Edge } from "edge.js";
-import navigation from "../constants/navigaion.ts";
+import navigation, { rightNavigation } from "@/constants/navigaion.ts";
+
+export let edgeInstance: Edge;
+
+export function getRenderInstance() {
+	return edgeInstance;
+}
 
 export const initEdge = () => {
 	const edge = Edge.create();
 	edge.mount(new URL("../views", import.meta.url));
 	edge.global("config", {
 		navigation: navigation,
+		rightNavigation: rightNavigation,
 	});
 
 	return edge;
@@ -36,6 +43,7 @@ export function renderFile(
 ) {
 	const parsedPath = path.parse(pathname);
 	const engine = initEdge();
+	edgeInstance = engine;
 	return promisify(cb, async (cb: any) => {
 		options.locals = options;
 		try {

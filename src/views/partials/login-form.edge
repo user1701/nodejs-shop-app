@@ -1,0 +1,33 @@
+<form action="/login" method="POST">
+    <input type="hidden" name="_csrf" value="{{locals.csrfToken}}">
+    <div class="input-group">
+        <label class="text-sm text-gray-700" for="email">Email:</label>
+        <input
+            type="email"
+            name="email"
+            value="{{ data.email }}"
+            id="email"
+            class="{{errors && 'email' in errors && 'border-red-400'}}"
+            required
+        />
+        @if(errors?.email?.msg)
+            <p class="text-red-700 px-4 pt-1 relative" role="alert">Error: {{errors.email.msg}}</p>
+        @end
+    </div>
+    <div class="input-group">
+        <label class="text-sm text-gray-700" for="password">Password:</label>
+        <input
+            type="password"
+            name="password"
+            value="{{ data.password }}"
+            id="password"
+            class="{{errors && 'password' in errors && 'border-red-400'}}"
+            required
+        />
+        @if(errors?.password?.msg)
+            <p class="text-red-700 px-4 py-1 relative" role="alert">Error: {{errors.password.msg}}</p>
+        @end
+    </div>
+
+    <button type="submit">Login</button>
+</form>

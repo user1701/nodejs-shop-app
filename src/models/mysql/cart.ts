@@ -31,7 +31,7 @@ import {
 	type InferCreationAttributes,
 	type NonAttribute,
 } from "sequelize";
-import sequelize from "../utils/db.ts";
+import sequelize from "../../utils/db.ts";
 import type Product from "./product.ts";
 import type User from "./user.ts";
 

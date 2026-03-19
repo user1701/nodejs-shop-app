@@ -1,29 +1,63 @@
-import type { Request, Response } from "express";
-import Product from "../models/product.ts";
+import type { NextFunction, Request, Response } from "express";
+import Product from "@/models/product.ts";
+import { matchedData, validationResult } from "express-validator";
+import mongoose from "mongoose";
+import { getUploadedFilePath } from "@/utils/getUploadedFilePath.ts";
+import { deleteFile } from "@/utils/fs.ts";
 
-export const getProducts = async (req: Request, res: Response) => {
-	const products = await Product.findAll();
-	console.log(`Fetched ${products.length} products from database.`);
-
-	res.render("shop", { products, path: req.path });
+export const getProducts = async (
+	req: Request,
+	res: Response,
+	next: NextFunction
+) => {
+	try {
+		const products = await Product.find();
+		console.log(`Fetched ${products.length} products.`);
+		return res.render("shop", {
+			products,
+			path: req.path,
+			isAuthenticated: req.session.isAuthenticated,
+		});
+	} catch (err: unknown) {
+		if (typeof err === "string") {
+			next(new Error(err));
+		} else if (err instanceof Error) {
+			next(err);
+		}
+	}
 };
 
-export const getMyProducts = async (req: Request, res: Response) => {
-	if (!req.user) {
+export const getMyProducts = async (
+	req: Request,
+	res: Response,
+	next: NextFunction
+) => {
+	if (!req.session.user) {
 		return res.status(401).send("Unauthorized: No user logged in.");
 	}
 
-	const products = await req.user.getProducts();
-	console.log(`Fetched ${products.length} products for user ${req.user.id}.`);
-
-	res.render("shop", {
-		products,
-		path: req.path,
-		title: "My Products",
-	});
+	try {
+		const products = await Product.find({ userId: req.session.user._id });
+		return res.render("shop", {
+			products: products,
+			path: req.path,
+			title: "My Products",
+			isAuthenticated: req.session.isAuthenticated,
+		});
+	} catch (err: unknown) {
+		if (typeof err === "string") {
+			next(new Error(err));
+		} else if (err instanceof Error) {
+			next(err);
+		}
+	}
 };
 
-export const getProduct = async (req: Request, res: Response) => {
+export const getProduct = async (
+	req: Request,
+	res: Response,
+	next: NextFunction
+) => {
 	const productId = req.params.id;
 	console.log(`Fetching product with ID: ${productId}`);
 
@@ -31,138 +65,238 @@ export const getProduct = async (req: Request, res: Response) => {
 		return res.status(400).send("Product ID is required.");
 	}
 
+	if (!mongoose.isValidObjectId(productId)) {
+		return res.redirect("/products");
+	}
+
 	try {
-		const product = await Product.findOne({ where: { id: productId } });
-		console.log("Product fetched from database:", product);
+		const product = await Product.findById(productId);
 
 		if (!product) {
 			return res.status(404).send("Product not found.");
-		} else {
-			console.log("Product found:", product);
-			res.render("product", { product });
 		}
+
+		return res.render("product", {
+			product,
+			isAuthenticated: req.session.isAuthenticated,
+		});
 	} catch (err: unknown) {
 		console.error("Error fetching product:", err);
-		res.status(500).send("Internal server error.");
+		if (typeof err === "string") {
+			next(new Error(err));
+		} else if (err instanceof Error) {
+			next(err);
+		}
 	}
 };
 
 export const getAddProduct = async (req: Request, res: Response) => {
-	res.render("add-product", {
+	return res.render("add-product", {
 		path: req.path,
+		isAuthenticated: req.session.isAuthenticated,
+		errors: {},
+		data: {
+			title: "",
+			imageUrl: "",
+			description: "",
+			price: "",
+		},
 	});
 };
 
-export const postAddProduct = async (req: Request, res: Response) => {
-	const { title = "", imageUrl, description, price } = req.body;
+export const postAddProduct = async (
+	req: Request,
+	res: Response,
+	next: NextFunction
+) => {
+	const { title = "", description, price } = req.body;
+	console.log("%s adding a new product", req.path);
+	const image = req.file;
 
-	if (!title) {
-		return res.status(400).send("Product title is required.");
+	const errors = validationResult(req);
+	const data = matchedData(req, {
+		includeOptionals: true,
+		onlyValidData: false,
+	});
+	console.log(errors);
+	console.log(data);
+
+	if (!errors.isEmpty() || !image) {
+		return res.status(422).render("add-product", {
+			isAuthenticated: req.session.isAuthenticated,
+			errors: errors.mapped(),
+			data,
+		});
 	}
 
-	if (!price || isNaN(parseFloat(price))) {
-		return res.status(400).send("Product price is required.");
-	}
+	// const image = await fetch("https://dog.ceo/api/breeds/image/random");
+	// const imageData = (await image.json()) as { message: string };
+	// const productImageUrl = imageData.message;
 
-	if (!description || description.trim().length === 0) {
-		return res.status(400).send("Product description is required.");
-	}
-
-	const image = await fetch("https://dog.ceo/api/breeds/image/random");
-	const imageData = (await image.json()) as { message: string };
-	const productImageUrl = imageData.message;
+	const product = new Product({
+		title,
+		imageUrl: getUploadedFilePath(image),
+		description,
+		price: price,
+		userId: req.session.user._id,
+	});
 
 	try {
-		const newProduct = await req.user.createProduct({
-			title,
-			imageUrl: imageUrl || productImageUrl,
-			description,
-			price: parseFloat(price),
-		});
-		// const newProduct = await Product.create(product);
-		console.log("Product added with ID: ", newProduct);
-
-		res.redirect("/");
+		await product.save();
+		console.log("Product saved successfully:", product);
+		return res.redirect("/products/my");
 	} catch (err: unknown) {
 		console.error("Error adding product:", err);
-		return res.status(500).send("Internal server error.");
+
+		if (typeof err === "string") {
+			next(new Error(err));
+		} else if (err instanceof Error) {
+			next(err);
+		}
 	}
 };
 
-export const getEditProduct = async (req: Request, res: Response) => {
+export const getEditProduct = async (
+	req: Request,
+	res: Response,
+	next: NextFunction
+) => {
 	const productId = req.params.id;
 	console.log(`Editing product with ID: ${productId}`);
 	if (!productId) {
-		return res.status(400).send("Product ID is required.");
+		return res.redirect("/products/my");
 	}
+
+	if (!mongoose.isValidObjectId(productId)) {
+		return res.redirect("/products/my");
+	}
+
 	try {
-		const [product] = await req.user.getProducts({ where: { id: productId } });
+		const product = await Product.findById(productId);
+		console.log(product);
 		if (!product) {
 			return res.status(404).send("Product not found.");
 		}
 
-		res.render("edit-product", { product: product });
-	} catch (err: unknown) {
-		console.error("Error finding product:", err);
-		return res.status(500).send("Internal server error.");
-	}
-};
-
-export const updateProduct = async (req: Request, res: Response) => {
-	const { id, title, imageUrl, description, price } = req.body;
-	console.log(`Updating product with ID: ${id}`);
-	if (!id) {
-		return res.status(400).send("Product ID is required.");
-	}
-
-	try {
-		const [affectedRows] = await Product.update(
-			{
-				title,
-				imageUrl,
-				description,
-				price,
-			},
-			{ where: { id } }
-		);
-		if (affectedRows === 0) {
-			return res.status(404).send("Product not found or no changes made.");
+		if (product.userId && !product.userId.equals(req.session.user._id)) {
+			return res.redirect("/products/my");
 		}
 
-		res.status(200).send("Product updated successfully.");
+		return res.render("edit-product", {
+			product: product,
+			isAuthenticated: req.session.isAuthenticated,
+		});
 	} catch (err: unknown) {
 		console.error("Error finding product:", err);
-		return res.status(500).send("Internal server error.");
+		if (typeof err === "string") {
+			next(new Error(err));
+		} else if (err instanceof Error) {
+			next(err);
+		}
 	}
 };
 
-export const deleteProduct = async (req: Request, res: Response) => {
+export const updateProduct = async (
+	req: Request,
+	res: Response,
+	next: NextFunction
+) => {
+	const { _id, title, description, price } = req.body;
+	console.log(`Updating product with ID: ${req.params.id}`);
+	const image = req.file;
+
+	try {
+		if (!_id) {
+			throw new Error("Product ID is required.");
+		}
+
+		if (!mongoose.isValidObjectId(_id)) {
+			return res.redirect("/products/my");
+		}
+
+		const product = await Product.findById(_id);
+
+		if (!product) {
+			throw new Error(`Product with an ID: ${_id} not found!`);
+		}
+
+		if (product.userId && !product.userId.equals(req.session.user._id)) {
+			throw new Error(`Product belongs to another user id: ${product.userId}`);
+		}
+
+		const errors = validationResult(req);
+		const productData = matchedData(req, {
+			includeOptionals: true,
+			onlyValidData: false,
+		});
+
+		if (!errors.isEmpty()) {
+			return res.render("edit-product", {
+				product: productData,
+				errors: errors.mapped(),
+				isAuthenticated: req.session.isAuthenticated,
+			});
+		}
+
+		product.title = title;
+		if (image) {
+			console.log(image);
+			await deleteFile("public" + product.imageUrl);
+			product.imageUrl = getUploadedFilePath(image);
+		}
+		product.description = description;
+		product.price = price;
+
+		await product.save();
+
+		return res.status(200).redirect("/products/my");
+	} catch (err: unknown) {
+		console.error("Error finding product:", err);
+		if (typeof err === "string") {
+			next(new Error(err));
+		} else if (err instanceof Error) {
+			next(err);
+		}
+	}
+};
+
+export const deleteProduct = async (
+	req: Request,
+	res: Response,
+	next: NextFunction
+) => {
 	const productId = req.params.id;
 	console.log(`Deleting product with ID: ${productId}`);
-	if (!productId) {
-		return res.status(400).send("Product ID is required.");
-	}
 
 	try {
-		const result = await req.user
-			.getProducts({ where: { id: productId } })
-			.then(([product]) => {
-				if (product) {
-					product.destroy();
-					return product.id;
-				}
-				return 0;
-			});
-		// const result = await Product.destroy({ where: { id: productId } });
-		console.log("Delete operation result:", result);
-
-		if (result === 0) {
-			return res.status(404).send("Product not found.");
+		if (!productId) {
+			throw new Error("Product ID is required.");
 		}
 
-		res.status(204).send();
+		if (!mongoose.isValidObjectId(productId)) {
+			throw new Error("Invalid product id");
+		}
+
+		const product = await Product.findOne({ _id: productId });
+
+		if (!product) {
+			throw new Error(`Product with an id: ${productId} not found.`);
+		}
+
+		await deleteFile("public" + product.imageUrl);
+
+		if (product.userId && product.userId.equals(req.session.user._id)) {
+			await Product.deleteOne({ _id: productId });
+			return res.redirect("/");
+		} else {
+			throw new Error("Product belongs to another user!");
+		}
 	} catch (err: unknown) {
 		console.error("Error deleting product:", err);
-		return res.status(500).send("Internal server error.");
+		if (typeof err === "string") {
+			next(new Error(err));
+		} else if (err instanceof Error) {
+			next(err);
+		}
 	}
 };
