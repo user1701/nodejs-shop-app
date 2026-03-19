@@ -3,6 +3,7 @@ import Product from "@/models/product.ts";
 import { matchedData, validationResult } from "express-validator";
 import mongoose from "mongoose";
 import { getUploadedFilePath } from "@/utils/getUploadedFilePath.ts";
+import { deleteFile } from "@/utils/fs.ts";
 
 export const getProducts = async (
 	req: Request,
@@ -240,6 +241,7 @@ export const updateProduct = async (
 		product.title = title;
 		if (image) {
 			console.log(image);
+			await deleteFile("public" + product.imageUrl);
 			product.imageUrl = getUploadedFilePath(image);
 		}
 		product.description = description;
@@ -280,6 +282,8 @@ export const deleteProduct = async (
 		if (!product) {
 			throw new Error(`Product with an id: ${productId} not found.`);
 		}
+
+		await deleteFile("public" + product.imageUrl);
 
 		if (product.userId && product.userId.equals(req.session.user._id)) {
 			await Product.deleteOne({ _id: productId });

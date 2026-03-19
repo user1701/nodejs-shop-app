@@ -25,16 +25,19 @@
     </nav>
 </header>
 
-<script>
-    async function logout() {
-        await fetch("/logout", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "CSRF-Token": "{{locals?.csrfToken}}"
-            },
-        }).then(() => {
-            window.location.href = "/";
-        });
-    }
-</script>
+
+@pushOnceTo('scripts')
+    <script>
+        async function logout() {
+            await fetch("/logout", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "CSRF-Token": "{{locals?.csrfToken}}"
+                },
+            }).then(() => {
+                window.location.href = "/";
+            });
+        }
+    </script>
+@end

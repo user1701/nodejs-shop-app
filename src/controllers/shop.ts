@@ -3,8 +3,12 @@ import User, { type IUser } from "@/models/user.ts";
 import Product, { type IProduct } from "@/models/product.ts";
 import Order from "@/models/order.ts";
 import type { Document, PopulatedDoc } from "mongoose";
+import { __dirname } from "@/utils/paths.ts";
 import path from "path";
 import * as fs from "node:fs";
+
+import PDFDoc from "pdfkit";
+import { checkFileExists } from "@/utils/fs.ts";
 
 export const getShopHome = async (
 	req: Request,
@@ -257,21 +261,61 @@ export const createOrder = async (
 
 export const getInvoice = (req: Request, res: Response, next: NextFunction) => {
 	const { id } = req.params;
-    const invoiceName = `invoice-${id}.pdf`;
-	try {
-        const invoicePath = path.join(__dirname, "..", "data", "invoices", invoiceName);
-        fs.readFile(invoicePath, (err, data) => {
-            if (err) {
-                throw new Error("Invoice not found");
-            }
-            res.setHeader("Content-Type", "application/pdf");
-            res.send(data);
-        });
-	} catch (err) {
-		if (typeof err === "string") {
-			next(new Error(err));
-		} else if (err instanceof Error) {
-			next(err);
-		}
-	}
+
+	Order.findOne({ _id: id })
+		.populate("user")
+		.then(async (order) => {
+			if (!order) {
+				throw new Error("Order not found");
+			}
+
+			if (!order.user._id.equals(req.session.user._id)) {
+				throw new Error("Unauthorized");
+			}
+
+			const invoiceName = `invoice-${id}.pdf`;
+			const invoicePath = path.join(
+				__dirname,
+				"..",
+				"..",
+				"data",
+				"invoices",
+				invoiceName
+			);
+
+			if (await checkFileExists(invoicePath)) {
+				const file = fs.createReadStream(invoicePath);
+				res.setHeader("Content-Type", "application/pdf");
+				res.setHeader(
+					"Content-Disposition",
+					`inline; filename="${invoiceName}"`
+				);
+				file.pipe(res);
+			}
+
+			let totalPrice = 0;
+			const doc = new PDFDoc();
+			doc.pipe(fs.createWriteStream(invoicePath));
+			doc.pipe(res);
+
+			doc.fontSize(26).text(`Invoice: #${id}`);
+			doc.fontSize(16).text("----------------------------------------");
+			for (const item of order.items) {
+				const { product } = item;
+				doc.text(`${product.title} - x${item.quantity} - $${product.price}`);
+				const itemTotal = item.quantity * product.price;
+				totalPrice += itemTotal;
+			}
+			doc.text("----------------------------------------");
+			doc.fontSize(18).text(`Total: $${totalPrice}`);
+			doc.end();
+		})
+		.catch((err) => {
+			console.error("Error finding order:", err);
+			if (typeof err === "string") {
+				next(new Error(err));
+			} else if (err instanceof Error) {
+				next(err);
+			}
+		});
 };

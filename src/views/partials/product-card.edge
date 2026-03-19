@@ -9,8 +9,8 @@
 
     <section class="product-card__body">
         <h3 class="product-card__title">
-            <a href="/products/{{ product._id }}" class="product-card__title-link inline-flex items-center gap-2">
-                <span class="hover:underline inline-block">{{ product.title }}</span><i class="fa-solid fa-link text-sm text-black-700 inline-block"></i>
+            <a href="/products/{{ product._id }}" class="product-card__title-link inline-flex items-center gap-2 line-clamp-1 relative pr-[25px]!">
+                <span class="hover:underline line-clamp-1">{{ product.title }}</span> <i class="fa-solid fa-link text-sm text-black-700 absolute right-[6px] top-[6px]"></i>
             </a>
         </h3>
         <p class="product-card__description text-md my-2">{{ product.description }}</p>

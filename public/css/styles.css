@@ -176,7 +176,6 @@ form {
 	}
 
 	.product-card__title-link {
-		all: unset;
 		display: block;
 		cursor: pointer;
 	}

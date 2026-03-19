@@ -12,7 +12,7 @@
                         <div class="cart__product-price">${{ product.id.price }}</div>
                     </div>
                     <div class="cart__product-actions">
-                        <button type="button" class="product-card__button danger" onclick="removeProduct('{{product.id._id}}')">Delete</button>
+                        <button type="button" class="product-card__button danger" onclick="removeProduct('{{product.id._id}}')"><i class="fa-regular fa-trash-can fa-lg"></i></button>
                     </div>
                 </div>
             @else
@@ -40,7 +40,10 @@
 
         try {
             const response = await fetch(`/cart/${cartItemId}`, {
-                method: "Delete"
+                method: "Delete",
+                headers: {
+                   'CSRF-Token': '{{locals.csrfToken}}'
+                }
             });
 
             location.reload()
