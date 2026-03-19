@@ -1,11 +1,11 @@
-# udemy-nodejs
+# nodejs-backend-playground
 
-![Node.js](https://img.shields.io/badge/Node.js-20-blue?logo=node.js)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.9.2-blue?logo=typescript)
-![Express](https://img.shields.io/badge/Express-5.1.0-lightgrey?logo=express)
-![Mongoose](https://img.shields.io/badge/Mongoose-9.2.4-green?logo=mongoose)
-![Edge.js](https://img.shields.io/badge/Edge.js-6.3.0-000000?logo=javascript)
-![PDFKit](https://img.shields.io/badge/PDFKit-0.18.0-blueviolet?logo=pdf)
+[![Node.js](https://img.shields.io/badge/Node.js-20-blue?logo=node.js)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9.2-blue?logo=typescript)](https://www.typescriptlang.org/)
+[![Express](https://img.shields.io/badge/Express-5.1.0-lightgrey?logo=express)](https://expressjs.com/)
+[![Mongoose](https://img.shields.io/badge/Mongoose-9.2.4-green?logo=mongoose)](https://mongoosejs.com/)
+[![Edge.js](https://img.shields.io/badge/Edge.js-6.3.0-000000?logo=javascript)](https://edgejs.dev/)
+[![PDFKit](https://img.shields.io/badge/PDFKit-0.18.0-blueviolet?logo=pdf)](https://pdfkit.org/)
 
 Node.js + Express + TypeScript shopping app with Edge.js templates, MongoDB (Mongoose), authentication (session + CSRF), product CRUD, cart, and PDF invoices.
 
