@@ -4,19 +4,47 @@ import { matchedData, validationResult } from "express-validator";
 import mongoose from "mongoose";
 import { getUploadedFilePath } from "@/utils/getUploadedFilePath.ts";
 import { deleteFile } from "@/utils/fs.ts";
+import { ITEMS_PER_PAGE } from "@/constants";
+import { getPageInfo } from "@/utils/pagination.ts";
+
+interface RequestParams {}
+interface ResponseBody {}
+interface RequestBody {}
+interface RequestPaginationQuery {
+	page: string;
+	perPage: string;
+}
 
 export const getProducts = async (
-	req: Request,
+	req: Request<
+		RequestParams,
+		ResponseBody,
+		RequestBody,
+		RequestPaginationQuery
+	>,
 	res: Response,
 	next: NextFunction
 ) => {
+	const page = parseInt(req.query.page, 10) || 1;
+	const perPage = parseInt(req.query.perPage, 10) || ITEMS_PER_PAGE;
 	try {
-		const products = await Product.find();
+		const totalItems = await Product.find().countDocuments();
+		const products = await Product.find()
+			.skip((page - 1) * perPage)
+			.limit(perPage);
+
 		console.log(`Fetched ${products.length} products.`);
+
+		const pager = getPageInfo(page, perPage, totalItems);
+		console.log(pager);
+
+        res.setHeader('Cache-Control', 'public, max-age=3600');
+
 		return res.render("shop", {
 			products,
 			path: req.path,
 			isAuthenticated: req.session.isAuthenticated,
+			pager,
 		});
 	} catch (err: unknown) {
 		if (typeof err === "string") {
@@ -28,21 +56,36 @@ export const getProducts = async (
 };
 
 export const getMyProducts = async (
-	req: Request,
+	req: Request<
+		RequestParams,
+		ResponseBody,
+		RequestBody,
+		RequestPaginationQuery
+	>,
 	res: Response,
 	next: NextFunction
 ) => {
+	const page = parseInt(req.query.page, 10) || 1;
+	const perPage = parseInt(req.query.perPage, 10) || ITEMS_PER_PAGE;
 	if (!req.session.user) {
 		return res.status(401).send("Unauthorized: No user logged in.");
 	}
 
 	try {
-		const products = await Product.find({ userId: req.session.user._id });
+		const totalItems = await Product.find({
+			userId: req.session.user._id,
+		}).countDocuments();
+		const products = await Product.find({ userId: req.session.user._id })
+			.skip((page - 1) * perPage)
+			.limit(perPage);
+
+		const pager = getPageInfo(page, perPage, totalItems);
 		return res.render("shop", {
 			products: products,
 			path: req.path,
 			title: "My Products",
 			isAuthenticated: req.session.isAuthenticated,
+			pager,
 		});
 	} catch (err: unknown) {
 		if (typeof err === "string") {

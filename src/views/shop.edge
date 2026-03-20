@@ -1,16 +1,15 @@
 @layout.app({ title: "Shop - Main Page", isAuthenticated, locals })
-
     @slot('main')
-    <h2 class="text-lg text-gray-700">Products</h2>
-    <section class="product-container">
-        @each(product in products)
-            @include('partials/product-card')
-        @else
-            <p>No products available at the moment.</p>
+        <h2 class="text-lg text-gray-700">Products</h2>
+        <section class="product-container">
+            @each(product in products)
+                @include('partials/product-card')
+            @else
+                <p>No products available at the moment.</p>
+            @end
+        </section>
+        @if(pager !== undefined)
+            @include('partials/pagination')
         @end
-    </section>
-
-
     @endslot
-
 @end
