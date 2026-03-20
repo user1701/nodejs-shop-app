@@ -59,6 +59,7 @@ router.post(
 	],
 	login
 );
+router.get("/logout", logout);
 router.post("/logout", logout);
 router.post("/reset-password", resetPasword);
 router.post("/create-password", newPassword);

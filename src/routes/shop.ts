@@ -7,13 +7,12 @@ import {
 	getCart,
 	getInvoice,
 	getOrder,
-	getShopHome,
 } from "../controllers/shop.ts";
 import { isAuthenticated } from "@/middleware/protectedRoutes.ts";
 
 const router = Router();
 
-router.get("/", getShopHome);
+router.get("/", getProducts);
 
 router.get("/products", getProducts);
 router.get("/products/:id", getProduct);
