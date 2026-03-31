@@ -5,7 +5,7 @@
         name="perPage"
         class="h-[34px] w-14 rounded-md border border-slate-200 bg-white px-2 py-1 text-slate-700 cursor-pointer transition-colors duration-150 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
     >
-        @each(value in [1, 2, 4])
+        @each(value in [2, 4, 8])
             <option value="{{value}}" {{ html.attrs({
                 selected: value == pager.perPage
             })}}>{{value}}</option>
