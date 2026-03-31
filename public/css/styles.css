@@ -15,11 +15,11 @@ body {
 	z-index: 10;
 }
 .header-nav {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    margin: 0 auto;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	margin: 0 auto;
 }
 
 .nav-list {
@@ -29,10 +29,10 @@ body {
 	display: flex;
 	justify-content: flex-start;
 
-    .right-nav {
-        margin-left: auto;
-        justify-content: flex-end;
-    }
+	.right-nav {
+		margin-left: auto;
+		justify-content: flex-end;
+	}
 
 	a {
 		text-decoration: none;
@@ -105,8 +105,8 @@ form {
 		padding: 0.5em 1em;
 		font-size: 1em;
 		font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        border-width: 1px;
-        border-radius: 3px;
+		border-width: 1px;
+		border-radius: 3px;
 	}
 
 	label {
@@ -313,7 +313,7 @@ form {
 	display: flex;
 	flex-flow: row wrap;
 	align-items: center;
-    justify-content: space-between;
-    font-size: 1.4em;
-    padding-right: calc(48px + 80px + 11px);
+	justify-content: space-between;
+	font-size: 1.4em;
+	padding-right: calc(48px + 80px + 11px);
 }
