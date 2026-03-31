@@ -30,12 +30,12 @@ This repo follows the classic Git-flow idea: keep stable production history sepa
 Use `hotfix/*` when there is a production issue and you need a quick patch.
 
 1. Create a branch from `main`:
-   - `hotfix/<next-patch-version>`
+  - `hotfix/<next-patch-version>`
 2. Make the minimal fix needed to resolve the issue.
 3. Update versioning (see next section).
 4. Merge back:
-   - merge into `main` (so production gets the fix)
-   - merge into `develop` (so the fix is not lost later)
+  - merge into `main` (so production gets the fix)
+  - merge into `develop` (so the fix is not lost later)
 5. Tag the release in `main` (if your workflow uses tags).
 6. Delete the `hotfix/*` branch after merges succeed.
 
@@ -49,7 +49,7 @@ This guide assumes **Semantic Versioning (SemVer)**:
 
 ### When to bump which number
 
-- On `release/*`: bump for the planned release (often `MINOR` or sometimes `MAJOR`).
+- On `release/`*: bump for the planned release (often `MINOR` or sometimes `MAJOR`).
 - On `hotfix/*`: almost always bump `PATCH`.
 
 ### Practical approach
