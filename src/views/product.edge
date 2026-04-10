@@ -2,16 +2,58 @@
     @include('partials/header')
 
     @slot('main')
-        <h1>Product details</h1>
+        <h1>
+            Product details
+        </h1>
 
-        @if(product)
-            <h2>{{ product.title }}</h2>
-            @if(product.imageUrl)
-                <img src="{{ product.imageUrl }}" alt="{{ product.title }}" loading="lazy"/>
+        <div class="grid grid-cols-2 gap-4">
+            @if(product)
+                <div class="w-full">
+                    @if(product.imageUrl)
+                        <img class="aspect-auto object-contain w-full" src="{{ product.imageUrl }}" alt="{{ product.title }}" loading="lazy" />
+                    @end
+                </div>
+                <div class="w-full">
+                    <p>
+                        Name: {{ product.title }}
+                    </p>
+                    <p>
+                        About: {{ product.description }}
+                    </p>
+                    <p>
+                        Price: ${{ product.price }}
+                    </p>
+                    @if(isAuthenticated)
+                        <button class="mt-4! product-card__button small primary" onclick="addToCart('{{ product._id }}')">                            <i class="fa-solid fa-basket-shopping"></i>Add to cart					</button>
+                    @end
+                </div>
             @end
-            <p>{{ product.description }}</p>
-            <p>Price: ${{ product.price }}</p>
-        @end
-    @endslot
+        </div>
 
+    @endslot
+    
+@end
+ 
+@pushOnceTo('scripts')
+    <script>
+        async function addToCart(productId) {
+            // Logic to add product to cart
+            console.log(`Product ${productId} added to cart.`);
+            try {
+                const response = await fetch(`/cart/${productId}`, {
+                    method: "POST",
+                    redirect: "follow",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "CSRF-Token": "{{locals.csrfToken}}"
+                    }
+                });
+                if (response.redirected) {
+                    location.replace(response.url);
+                }
+            } catch (error) {
+                console.error("Error adding product to cart:", error);
+            }
+        }
+    </script>
 @end
