@@ -115,7 +115,7 @@ app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
 });
 
 const server = http.createServer(app);
-const PORT = parseInt(process.env.PORT) || 3000;
+const PORT = parseInt(process.env.PORT || "3000");
 
 env.ready.then(() => {
     console.log("Environment variables are ready", env.getEnvironment(), getMongoUri());
