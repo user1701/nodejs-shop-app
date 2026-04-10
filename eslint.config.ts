@@ -5,6 +5,7 @@ import { defineConfig } from "eslint/config";
 import eslintConfigPrettier from "eslint-config-prettier/flat";
 
 export default defineConfig([
+	{ ignores: ["dist/**"] },
 	{
 		files: ["**/*.{js,mjs,cjs,ts,mts,cts}"],
 		plugins: { js },
