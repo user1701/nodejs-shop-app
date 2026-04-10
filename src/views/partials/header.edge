@@ -3,27 +3,29 @@
         <ul class="nav-list">
             @each(link in config.navigation.filter(item => isAuthenticated || item.isAuthenticated === isAuthenticated))
                 <li>
-                    <a href="{{ locals?.path === link.url ? '#' : link.url }}" {{
-                        html.attrs({
+                    <a
+                        href="{{ locals?.path === link.url ? '#' : link.url }}"
+                        {{ html.attrs({
                             class: ["text-lg", locals?.path === link.url && 'active'].join(" ")
-                        })
-                    }}>{{link.text }}</a>
+                        }) }}
+                    >{{ link.text }}					</a>
                 </li>
             @end
         </ul>
         <ul class="nav-list right-nav">
             @if(isAuthenticated)
-                    <li>
-                        <a class="text-lg" onclick="logout()" href="#">{{-- link.text --}}logout</a>
-                    </li>
+                <li>
+                    <button id="logout" type="button" class="text-lg!">logout</button>
+                </li>
             @else
                 @each(link in config.rightNavigation.filter(item => !item.isAuthenticated))
                     <li>
-                        <a href="{{ locals?.path === link.url ? '#' : link.url }}" {{
-                            html.attrs({
+                        <a
+                            href="{{ locals?.path === link.url ? '#' : link.url }}"
+                            {{ html.attrs({
                                 class: ["text-lg", locals?.path === link.url && 'active'].join(" ")
-                            })
-                        }}>{{link.text }}</a>
+                            }) }}
+                        >{{ link.text }}					</a>
                     </li>
                 @end
             @end
@@ -31,19 +33,19 @@
     </nav>
 </header>
 
-
 @pushOnceTo('scripts')
     <script>
-        async function logout() {
+        logout.addEventListener("click", async function(e) {
+            e.preventDefault();
             await fetch("/logout", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     "CSRF-Token": "{{locals?.csrfToken}}"
-                },
+                }
             }).then(() => {
-                window.location.href = "/";
+                window.location.reload(true);
             });
-        }
+        });
     </script>
 @end
