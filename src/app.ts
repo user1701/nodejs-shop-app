@@ -15,7 +15,7 @@ import shopRoutes from "@/routes/shop.ts";
 import authRoutes from "@/routes/auth.ts";
 import { NotFoundController, ServerSideError } from "@/controllers/common.ts";
 
-import { MONGO_URI } from "@/constants";
+import { MONGO_URI } from "@/constants/db.ts";
 import mongoose from "mongoose";
 
 const PORT = process.env.PORT || 3001;
@@ -33,7 +33,7 @@ const storage = multer.diskStorage({
 		file: Express.Multer.File,
 		cb: (error: Error | null, filename: string) => void
 	) => {
-		console.log(file);
+        console.log(file)
 		cb(null, `${Date.now()}-${file.originalname.replaceAll(" ", "_")}`);
 	},
 });
@@ -72,7 +72,6 @@ app.use(
 		}),
 	})
 );
-//@ts-expect-error it works as expected
 app.use(csrf());
 app.use(flash());
 
