@@ -1,0 +1,21 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "outDir": "./dist",
+        "emitDeclarationOnly": true,
+        "noEmit": true,
+        "allowImportingTsExtensions": true,
+        "incremental": false,
+        "sourceMap": false,
+        "declaration": true,
+        "declarationMap": true,
+        "verbatimModuleSyntax": false
+    },
+    "tsc-alias": {
+        "verbose": true,
+        "fileExtensions": {
+            "inputGlob": "{ts,js,jsx,mjs}",
+            "outputCheck": ["js", "json", "jsx", "mjs"]
+        }
+    }
+}

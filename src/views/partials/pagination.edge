@@ -37,7 +37,7 @@
                 }) }}
         >{{ pager.prevPage }}					</button>
     @end
-
+    
     <button
         type="button"
         class="rounded-md border border-blue-700 bg-blue-500 cursor-pointer px-3 py-1 text-white transition-colors duration-150 hover:bg-blue-600"
@@ -57,7 +57,7 @@
                 }) }}
         >{{ pager.nextPage }}					</button>
     @end
-
+    
     <button
         type="button"
         aria-label="Next page"
@@ -83,7 +83,7 @@
                 value
             } = e.target;
             changePerPage(value);
-        })
+        });
 
         function changePerPage(num) {
             const urlParams = new URLSearchParams(window.location.search);

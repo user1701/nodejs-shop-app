@@ -1,6 +1,8 @@
 @layout.app({ title: "Shop - Home Page", isAuthenticated, locals, errors, data })
     @slot('main')
-        <h2 class="text-left text-lg max-w-[400px] mx-auto mt-6 mb-2!">Add a new product</h2>
+        <h2 class="text-left text-lg max-w-[400px] mx-auto mt-6 mb-2!">
+            Add a new product
+        </h2>
         @include('partials/add-product-form')
     @endslot
 @end

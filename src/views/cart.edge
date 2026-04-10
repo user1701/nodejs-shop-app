@@ -1,55 +1,67 @@
 @layout.app({ title: "Shop - Cart Page", isAuthenticated, locals })
 
     @slot('main')
-        <h1>Cart</h1>
+        <h1>
+            Cart
+        </h1>
 
         <div class="cart__wrapper">
             @each(product in cart)
                 <div class="cart__product">
                     <div class="cart__product-data">
-                        <h4 class="cart__product-title">{{ product.id.title }}</h4>
-                        <div class="cart__product-qty"><b>quantity: </b>{{ product.quantity }}</div>
-                        <div class="cart__product-price">${{ product.id.price }}</div>
+                        <h4 class="cart__product-title">
+                            {{ product.id.title }}
+                        </h4>
+                        <div class="cart__product-qty">
+                            <b>quantity: 			</b>{{ product.quantity }}
+                        </div>
+                        <div class="cart__product-price">
+                            ${{ product.id.price }}
+                        </div>
                     </div>
                     <div class="cart__product-actions">
-                        <button type="button" class="product-card__button danger" onclick="removeProduct('{{product.id._id}}')"><i class="fa-regular fa-trash-can fa-lg"></i></button>
+                        <button type="button" class="product-card__button danger" onclick="removeProduct('{{ product.id._id }}')">                            <i class="fa-regular fa-trash-can fa-lg"></i></button>
                     </div>
                 </div>
             @else
-                <h4>Cart is empty</h4>
+                <h4>
+                    Cart is empty
+                </h4>
             @end
         </div>
         @if(total > 0)
             <hr />
             <div class="cart__total">
-                <div>Total Price:</div>
-                <div>${{ total }}</div>
+                <div>
+                    Total Price:
+                </div>
+                <div>
+                    ${{ total }}
+                </div>
             </div>
             <form action="/orders" method="POST">
-                <input type="hidden" name="_csrf" value="{{locals.csrfToken}}">
-                <button type="submit" class="product-card__button success">Order Now</button>
+                <input type="hidden" name="_csrf" value="{{ locals.csrfToken }}" />
+                <button type="submit" class="product-card__button success">Order Now			</button>
             </form>
         @end
     @endslot
 @end
-
+ 
 @pushOnceTo('scripts')
-<script>
-    async function removeProduct(cartItemId) {
-        console.log('Deleting cart item with id: ', cartItemId);
-
-        try {
-            const response = await fetch(`/cart/${cartItemId}`, {
-                method: "Delete",
-                headers: {
-                   'CSRF-Token': '{{locals.csrfToken}}'
-                }
-            });
-
-            location.reload()
-        } catch (err) {
-            console.error('Error: deleting product from cart, ', err)
+    <script>
+        async function removeProduct(cartItemId) {
+            console.log("Deleting cart item with id: ", cartItemId);
+            try {
+                const response = await fetch(`/cart/${cartItemId}`, {
+                    method: "Delete",
+                    headers: {
+                        "CSRF-Token": "{{locals.csrfToken}}"
+                    }
+                });
+                location.reload();
+            } catch (err) {
+                console.error("Error: deleting product from cart, ", err);
+            }
         }
-    }
-</script>
+    </script>
 @end

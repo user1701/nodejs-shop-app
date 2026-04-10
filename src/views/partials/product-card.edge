@@ -1,76 +1,79 @@
 <div class="product-card">
     <div class="product-card__header">
         @if(product.imageUrl)
-        <img class="product-card__image" src="{{ product.imageUrl }}" alt="{{ product.title }} image" />
+            <img class="product-card__image" src="{{ product.imageUrl }}" alt="{{ product.title }} image" />
         @else
-        <img src="/images/placeholder-image.jpg" alt="default image placeholder" />
+            <img src="/images/placeholder-image.jpg" alt="default image placeholder" />
         @end
     </div>
 
     <section class="product-card__body">
         <h3 class="product-card__title">
-            <a href="/products/{{ product._id }}" class="product-card__title-link inline-flex items-center gap-2 line-clamp-1 relative pr-[25px]!">
-                <span class="hover:underline line-clamp-1">{{ product.title }}</span> <i class="fa-solid fa-link text-sm text-black-700 absolute right-[6px] top-[6px]"></i>
+            <a
+                href="/products/{{ product._id }}"
+                class="product-card__title-link inline-flex items-center gap-2 line-clamp-1 relative pr-[25px]!"
+            >
+                <span class="hover:underline line-clamp-1">{{ product.title }}			</span>                <i class="fa-solid fa-link text-sm text-black-700 absolute right-[6px] top-[6px]"></i>
             </a>
         </h3>
-        <p class="product-card__description text-md my-2">{{ product.description }}</p>
-        <p class="product-card__price text-md">Price: ${{ product.price }}</p>
+        <p class="product-card__description text-md my-2">
+            {{ product.description }}
+        </p>
+        <p class="product-card__price text-md">
+            Price: ${{ product.price }}
+        </p>
     </section>
 
     <footer class="product-card__footer">
         @if(isAuthenticated)
-            <button class="product-card__button small primary" onclick="addToCart('{{ product._id }}')"><i class="fa-solid fa-basket-shopping"></i> Add to Cart</button>
+            <button class="product-card__button small primary" onclick="addToCart('{{ product._id }}')">                <i class="fa-solid fa-basket-shopping"></i>Add to Cart			</button>
             <hr />
 
-            <button class="product-card__button small danger" onclick="deleteProduct('{{ product._id }}')"> <i class="fa-regular fa-trash-can fa-lg"></i> Delete</button>
-            <a class="product-card__button small" href="/products/edit/{{ product._id }}"><i class="fa-regular fa-pen-to-square"></i> Edit</a>
+            <button class="product-card__button small danger" onclick="deleteProduct('{{ product._id }}')">                <i class="fa-regular fa-trash-can fa-lg"></i>Delete			</button>
+            <a class="product-card__button small" href="/products/edit/{{ product._id }}">                <i class="fa-regular fa-pen-to-square"></i>Edit			</a>
         @end
-        <a class="product-card__button small" href="/products/{{ product._id }}">View Details</a>
+        <a class="product-card__button small" href="/products/{{ product._id }}">View Details			</a>
     </footer>
 </div>
 
-
 @pushOnceTo('scripts')
-<script>
-    async function addToCart(productId) {
-        // Logic to add product to cart
-        console.log(`Product ${productId} added to cart.`);
-        try {
-            const response = await fetch(`/cart/${productId}`, {
-                method: 'POST',
-                redirect: "follow",
-                headers: {
-                    'Content-Type': 'application/json',
-                    'CSRF-Token': '{{locals.csrfToken}}'
-                },
-            });
-
-            if (response.redirected) {
-                location.replace(response.url)
+    <script>
+        async function addToCart(productId) {
+            // Logic to add product to cart
+            console.log(`Product ${productId} added to cart.`);
+            try {
+                const response = await fetch(`/cart/${productId}`, {
+                    method: "POST",
+                    redirect: "follow",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "CSRF-Token": "{{locals.csrfToken}}"
+                    }
+                });
+                if (response.redirected) {
+                    location.replace(response.url);
+                }
+            } catch (error) {
+                console.error("Error adding product to cart:", error);
             }
-        } catch (error) {
-            console.error('Error adding product to cart:', error);
         }
 
-    }
-
-    async function deleteProduct(productId) {
-        // Logic to delete product
-        console.log(`Product ${productId} deleted.`);
-
-        try {
-            const response = await fetch(`/products/${productId}`, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'CSRF-Token': '{{locals.csrfToken}}'
-                },
-            });
-            console.log(response);
-            location.reload(); // Reload the page to reflect changes
-        } catch (error) {
-            console.error('Error deleting product:', error);
+        async function deleteProduct(productId) {
+            // Logic to delete product
+            console.log(`Product ${productId} deleted.`);
+            try {
+                const response = await fetch(`/products/${productId}`, {
+                    method: "DELETE",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "CSRF-Token": "{{locals.csrfToken}}"
+                    }
+                });
+                console.log(response);
+                location.reload(); // Reload the page to reflect changes
+            } catch (error) {
+                console.error("Error deleting product:", error);
+            }
         }
-    }
-</script>
+    </script>
 @end

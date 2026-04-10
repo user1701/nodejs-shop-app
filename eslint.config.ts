@@ -5,13 +5,15 @@ import { defineConfig } from "eslint/config";
 import eslintConfigPrettier from "eslint-config-prettier/flat";
 
 export default defineConfig([
-	{ ignores: ["dist/**"] },
-	{
-		files: ["**/*.{js,mjs,cjs,ts,mts,cts}"],
-		plugins: { js },
-		extends: ["js/recommended"],
-		languageOptions: { globals: globals.browser },
-	},
-	tseslint.configs.recommended,
-	eslintConfigPrettier,
+    {
+        ignores: ["dist/**"],
+    },
+    {
+        files: ["**/*.{js,mjs,cjs,ts,mts,cts}"],
+        plugins: { js },
+        extends: ["js/recommended"],
+        languageOptions: { globals: globals.node },
+    },
+    tseslint.configs.recommended,
+    eslintConfigPrettier,
 ]);

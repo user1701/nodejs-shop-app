@@ -30,12 +30,16 @@ This repo follows the classic Git-flow idea: keep stable production history sepa
 Use `hotfix/*` when there is a production issue and you need a quick patch.
 
 1. Create a branch from `main`:
-  - `hotfix/<next-patch-version>`
+
+- `hotfix/<next-patch-version>`
+
 2. Make the minimal fix needed to resolve the issue.
 3. Update versioning (see next section).
 4. Merge back:
-  - merge into `main` (so production gets the fix)
-  - merge into `develop` (so the fix is not lost later)
+
+- merge into `main` (so production gets the fix)
+- merge into `develop` (so the fix is not lost later)
+
 5. Tag the release in `main` (if your workflow uses tags).
 6. Delete the `hotfix/*` branch after merges succeed.
 
@@ -89,53 +93,53 @@ Examples:
 ## Allowed commit types (with examples)
 
 - `feat:` new user-facing feature
-  - `feat(pagination): add page navigation controls`
+    - `feat(pagination): add page navigation controls`
 - `fix:` bug fix
-  - `fix(auth): handle missing csrf token`
+    - `fix(auth): handle missing csrf token`
 - `refactor:` restructuring with no behavior change
-  - `refactor(db): simplify Mongo connection helper`
+    - `refactor(db): simplify Mongo connection helper`
 - `perf:` performance improvements
-  - `perf(shop): reduce redundant product queries`
+    - `perf(shop): reduce redundant product queries`
 - `chore:` maintenance/cleanup (tooling, refactors, deletions)
-  - `chore: update .gitignore for env files`
-  - `chore: remove unused files`
+    - `chore: update .gitignore for env files`
+    - `chore: remove unused files`
 - `docs:` documentation-only changes
-  - `docs: update README setup steps`
+    - `docs: update README setup steps`
 - `test:` adding/updating tests
-  - `test: cover order pagination edge cases`
+    - `test: cover order pagination edge cases`
 - `build:` build system changes
-  - `build: adjust TypeScript build config`
+    - `build: adjust TypeScript build config`
 - `ci:` CI pipeline changes
-  - `ci: update GitHub Actions Node version`
+    - `ci: update GitHub Actions Node version`
 - `style:` formatting only (no logic change)
-  - `style: run formatter on controller files`
+    - `style: run formatter on controller files`
 - `revert:` revert a previous commit
-  - `revert: fix(auth) - restore old session handling`
+    - `revert: fix(auth) - restore old session handling`
 
 ## Mapping message types to Git-flow actions
 
 - On `feature/*`:
-  - usually `feat:` (if it adds capability)
-  - or `fix:` (if it corrects a bug discovered while building)
+    - usually `feat:` (if it adds capability)
+    - or `fix:` (if it corrects a bug discovered while building)
 - On `release/*`:
-  - often `chore:` (version bump, final cleanup)
-  - and `fix:` for last-minute correctness fixes
+    - often `chore:` (version bump, final cleanup)
+    - and `fix:` for last-minute correctness fixes
 - On `hotfix/*`:
-  - almost always `fix:` (production-impacting bug)
-  - plus a `chore:` commit for the version bump (if you separate it)
+    - almost always `fix:` (production-impacting bug)
+    - plus a `chore:` commit for the version bump (if you separate it)
 
 ## Examples by scenario
 
 - Deleting unused files:
-  - `chore: remove unused mongoDB utility`
+    - `chore: remove unused mongoDB utility`
 - Adding a new page/view:
-  - `feat(views): add orders page`
+    - `feat(views): add orders page`
 - Fixing auth bug:
-  - `fix(auth): block login when user is inactive`
+    - `fix(auth): block login when user is inactive`
 - Version bump for a release:
-  - `chore(release): bump version to 1.5.0`
+    - `chore(release): bump version to 1.5.0`
 - Version bump for a hotfix:
-  - `chore(hotfix): bump version to 1.5.1`
+    - `chore(hotfix): bump version to 1.5.1`
 
 ## Quick checklist
 
@@ -143,4 +147,3 @@ Examples:
 - Is the subject in imperative mood (`add`/`fix`/`remove`)?
 - Is scope included when it helps (`auth`, `shop`, `db`, etc.)?
 - Is the subject short and without a trailing period?
-

@@ -2,16 +2,24 @@
     @include('partials/header')
 
     @slot('main')
-        <h1>Welcome to the Home Page</h1>
-         <p>Here are some of our products:</p>
+        <h1>
+            Welcome to the Home Page
+        </h1>
+        <p>
+            Here are some of our products:
+        </p>
 
         <ul>
             @each(product in products)
-                <li>{{ product.title }}</li>
+                <li>
+                    {{ product.title }}
+                </li>
             @else
-                <li>No products available at the moment.</li>
+                <li>
+                    No products available at the moment.
+                </li>
             @end
         </ul>
     @endslot
-
+    
 @end
