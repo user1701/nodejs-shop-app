@@ -5,104 +5,91 @@
         name="perPage"
         class="h-[34px] w-14 rounded-md border border-slate-200 bg-white px-2 py-1 text-slate-700 cursor-pointer transition-colors duration-150 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
     >
-        @each(value in [1, 2, 4])
-            <option value="{{value}}" {{ html.attrs({
+        @each(value in [2, 4, 8])
+            <option value="{{ value }}" {{ html.attrs({
                 selected: value == pager.perPage
-            })}}>{{value}}</option>
+            }) }}>
+                {{ value }}
+            </option>
         @end
     </select>
-    <button type="button"
-        {{
-            html.attrs({
-                onclick: `changePage(${pager.prevPage})`,
-            })
-        }}
-        class="{{
-            html.classNames([
+    <button
+        type="button"
+        class="{{ html.classNames([
                 baseLinkClass,
                 {
                     [disabledLinkClass]: !pager.hasPrevPage
                 }
-            ])
-        }}"
+            ]) }}"
         aria-label="Previous page"
-    >prev</button>
+        {{ html.attrs({
+                onclick: `changePage(${pager.prevPage})`,
+            }) }}
+    >prev					</button>
 
     @if(pager.hasPrevPage)
-        <button type="button"
-            {{
-                html.attrs({
+        <button
+            type="button"
+            aria-label="Previous page"
+            {{ html.attrs({
                     onclick: `changePage(${pager.prevPage})`,
                     class: baseLinkClass
-                })
-            }}
-            aria-label="Previous page"
-        >{{pager.prevPage}}</button>
+                }) }}
+        >{{ pager.prevPage }}					</button>
     @end
 
-	<button type="button"
-		class="rounded-md border border-blue-700 bg-blue-500 cursor-pointer px-3 py-1 text-white transition-colors duration-150 hover:bg-blue-600"
-        {{
-            html.attrs({
+    <button
+        type="button"
+        class="rounded-md border border-blue-700 bg-blue-500 cursor-pointer px-3 py-1 text-white transition-colors duration-150 hover:bg-blue-600"
+        aria-current="page"
+        {{ html.attrs({
                 onclick: `changePage(${pager.currentPage})`
-            })
-        }}
-		aria-current="page"
-	>{{pager.currentPage}}</button>
+            }) }}
+    >{{ pager.currentPage }}					</button>
 
     @if(pager.hasNextPage)
-        <button type="button"
-            {{
-                html.attrs({
+        <button
+            type="button"
+            aria-label="Next page"
+            {{ html.attrs({
                     onclick: `changePage(${pager.nextPage})`,
                     class: baseLinkClass
-                })
-            }}
-            aria-label="Next page"
-        >{{pager.nextPage}}</button>
+                }) }}
+        >{{ pager.nextPage }}					</button>
     @end
 
-    <button type="button"
-        {{
-            html.attrs({
+    <button
+        type="button"
+        aria-label="Next page"
+        {{ html.attrs({
                 onclick: `changePage(${pager.nextPage})`,
                 class: [baseLinkClass, pager.hasNextPage === false && disabledLinkClass].join(" ")
-            })
-        }}
-        aria-label="Next page"
-    >next</button>
+            }) }}
+    >next					</button>
 </nav>
 
 @pushOnceTo('scripts')
-<script>
-    function changePage(page) {
-        const urlParams = new URLSearchParams(window.location.search)
-        urlParams.set('page', page);
+    <script>
+        function changePage(page) {
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.set("page", page);
+            window.location.search = `?${urlParams.toString()}`;
+        }
 
-        window.location.search = `?${urlParams.toString()}`
-    }
+        const select = document.querySelector("[name=perPage]");
 
-    const select = document.querySelector('[name=perPage]');
-    select.addEventListener('change', (e) => {
-        const { value } = e.target
-        changePerPage(value)
-    })
+        select.addEventListener("change", e => {
+            const {
+                value
+            } = e.target;
+            changePerPage(value);
+        })
 
-/*    document.addEventListener('DOMContentLoaded', () => {
-        const urlParams = new URLSearchParams(window.location.search)
-        const selectedOption = urlParams.get(select.getAttribute('name'))
-        console.log(selectedOption)
-        select.value = selectedOption
-
-    })
-        */
-
-    function changePerPage(num) {
-        const urlParams = new URLSearchParams(window.location.search)
-        urlParams.set('page', 1) // fix error when user on last page increases perPage and try to open not existing page
-        urlParams.set('perPage', num);
-
-        window.location.search = `?${urlParams.toString()}`
-    }
-</script>
+        function changePerPage(num) {
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.set("page", 1); // fix error when user on last page increases perPage and try to open not existing page
+            urlParams.set("perPage", num);
+            window.location.search = `?${urlParams.toString()}`;
+        }
+    </script>
 @end
