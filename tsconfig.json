@@ -2,13 +2,13 @@
     "extends": "@tsconfig/node20/tsconfig.json",
     // Visit https://aka.ms/tsconfig to read more about this file
     "compilerOptions": {
-        "ignoreDeprecations": "6.0",
+        "ignoreDeprecations": "5.0",
         "baseUrl": "./src",
         "rootDir": "./src",
         "outDir": "./dist",
 
         "paths": {
-            "@/*": ["./src/*", "./src/*/index.ts"]
+            "@/*": ["./*"]
         },
 
         "target": "esnext",
