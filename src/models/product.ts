@@ -6,7 +6,7 @@ export interface IProduct extends Document {
     imageUrl: string;
     description: string;
     price: number;
-    userId: PopulatedDoc<IUser & Document>;
+    userId: PopulatedDoc<IUser>;
 }
 
 const ProductSchema = new Schema<IProduct>({

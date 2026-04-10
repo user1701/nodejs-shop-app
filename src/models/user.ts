@@ -2,7 +2,7 @@ import { Document, model, Schema, Types, type InferSchemaType, type PopulatedDoc
 import type { IProduct } from "./product.ts";
 
 interface ICartItem {
-    id: PopulatedDoc<IProduct & Document>;
+    id: PopulatedDoc<IProduct>;
     quantity: number;
 }
 
