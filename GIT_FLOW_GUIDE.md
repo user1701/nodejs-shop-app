@@ -49,7 +49,7 @@ This guide assumes **Semantic Versioning (SemVer)**:
 
 ### When to bump which number
 
-- On `release/`*: bump for the planned release (often `MINOR` or sometimes `MAJOR`).
+- On `release/*`: bump for the planned release (often `MINOR` or sometimes `MAJOR`).
 - On `hotfix/*`: almost always bump `PATCH`.
 
 ### Practical approach
