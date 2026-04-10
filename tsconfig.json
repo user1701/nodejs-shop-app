@@ -2,12 +2,13 @@
 	"extends": "@tsconfig/node20/tsconfig.json",
 	// Visit https://aka.ms/tsconfig to read more about this file
 	"compilerOptions": {
+        "baseUrl": ".",
 		// File Layout
 		"rootDir": "./",
 		"outDir": "./dist",
 
         "paths": {
-            "@/*": ["./src/*"]
+            "@/*": ["./src/*", "./src/*/index.ts"]
         },
 
 		// Environment Settings
@@ -43,7 +44,6 @@
 		"jsx": "react-jsx",
 		"verbatimModuleSyntax": true,
 		"isolatedModules": true,
-		"noUncheckedSideEffectImports": true,
 		"moduleDetection": "force",
 		"skipLibCheck": true,
 		"allowImportingTsExtensions": true,
