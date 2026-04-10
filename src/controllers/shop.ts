@@ -210,7 +210,7 @@ export const getInvoice = (req: Request, res: Response, next: NextFunction) => {
             }
 
             const invoiceName = `invoice-${id}.pdf`;
-            const invoicePath = path.join(__dirname, "..", "..", "data", "invoices", invoiceName);
+            const invoicePath = path.join(process.cwd(), "data", "invoices", invoiceName);
 
             if (await checkFileExists(invoicePath)) {
                 const file = fs.createReadStream(invoicePath);
