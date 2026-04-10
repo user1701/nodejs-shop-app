@@ -3,7 +3,6 @@ import User, { type IUser } from "./../models/user.ts";
 import Product, { type IProduct } from "./../models/product.ts";
 import Order from "./../models/order.ts";
 import type { Document, PopulatedDoc } from "mongoose";
-import { __dirname } from "./../utils/paths.ts";
 import path from "path";
 import * as fs from "node:fs";
 
