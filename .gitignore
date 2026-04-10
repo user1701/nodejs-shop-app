@@ -18,7 +18,8 @@ logs/
 
 # Environment variables
 .env
-.env.*.local
+.env.*
+!.env.example
 
 # IDE and OS specific files
 .vscode/
