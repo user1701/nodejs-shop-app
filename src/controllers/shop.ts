@@ -1,7 +1,7 @@
 import type { NextFunction, Request, Response } from "express";
-import User, { type IUser } from "./../models/user.ts";
-import Product, { type IProduct } from "./../models/product.ts";
-import Order from "./../models/order.ts";
+import User, { type IUser } from "@/models/user.ts";
+import Product, { type IProduct } from "@/models/product.ts";
+import Order from "@/models/order.ts";
 import type { Document, PopulatedDoc } from "mongoose";
 import path from "path";
 import * as fs from "node:fs";
@@ -183,7 +183,7 @@ export const createOrder = async (req: Request, res: Response, next: NextFunctio
             user.cart.items = [];
             user.save();
         })
-        .catch((err) => {
+        .catch((err: unknown) => {
             if (typeof err === "string") {
                 next(new Error(err));
             } else if (err instanceof Error) {
@@ -235,7 +235,7 @@ export const getInvoice = (req: Request, res: Response, next: NextFunction) => {
             doc.fontSize(18).text(`Total: $${totalPrice}`);
             doc.end();
         })
-        .catch((err) => {
+        .catch((err: unknown) => {
             console.error("Error finding order:", err);
             if (typeof err === "string") {
                 next(new Error(err));
