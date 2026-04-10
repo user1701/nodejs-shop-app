@@ -111,3 +111,4 @@ Admin/product routes (`src/routes/products.ts`):
 
 - CSRF is enabled globally in `src/app.ts`, so form submissions must include the generated CSRF token.
 - The app uses Edge.js templates located in `src/views`.
+
